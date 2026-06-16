@@ -359,7 +359,7 @@
       left: 54px;
       top: 0;
       bottom: 0;
-      width: 290px;
+      width: 260px;
       background: var(--panel);
       border-right: 1px solid var(--border);
       display: none;
@@ -402,50 +402,6 @@
     #icon-search:focus {
       outline: none;
       border-color: var(--accent)
-    }
-
-    .panel-tabs {
-      display: flex;
-      gap: 0;
-      flex-shrink: 0;
-      border-bottom: 1px solid var(--border)
-    }
-
-    .panel-tab {
-      flex: 1;
-      padding: 7px 4px;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .5px;
-      text-align: center;
-      cursor: pointer;
-      color: var(--muted);
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -1px;
-      transition: all .15s;
-      text-transform: uppercase
-    }
-
-    .panel-tab:hover {
-      color: var(--text)
-    }
-
-    .panel-tab.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent)
-    }
-
-    .panel-content {
-      display: none;
-      flex: 1;
-      overflow: hidden;
-      flex-direction: column
-    }
-
-    .panel-content.active {
-      display: flex
     }
 
     #icons-scroll {
@@ -509,99 +465,6 @@
       overflow: hidden;
       text-overflow: ellipsis;
       width: 100%
-    }
-
-    /* CIRCUITS PANEL */
-    #circuits-content {
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      flex-shrink: 0
-    }
-
-    #circuit-search {
-      width: 100%;
-      background: var(--input);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      color: var(--text);
-      padding: 5px 8px;
-      font-size: 12px;
-      height: 28px
-    }
-
-    #circuit-search:focus {
-      outline: none;
-      border-color: var(--accent)
-    }
-
-    #circuits-scroll {
-      flex: 1;
-      overflow-y: auto;
-      padding: 6px 8px
-    }
-
-    .circuit-category {
-      margin-bottom: 12px
-    }
-
-    .circuit-cat-title {
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--muted);
-      margin-bottom: 6px;
-      padding-bottom: 4px;
-      border-bottom: 1px solid var(--border)
-    }
-
-    .circuit-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 6px
-    }
-
-    .circuit-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      padding: 6px 4px;
-      border-radius: 6px;
-      cursor: pointer;
-      border: 1px solid var(--border);
-      background: var(--input);
-      transition: all .15s
-    }
-
-    .circuit-item:hover {
-      background: var(--hover);
-      border-color: var(--accent)
-    }
-
-    .circuit-item:active {
-      border-color: var(--accent);
-      background: var(--sel)
-    }
-
-    .circuit-item img {
-      width: 100%;
-      height: 56px;
-      object-fit: contain;
-      border-radius: 3px;
-      filter: invert(1) brightness(0.8)
-    }
-
-    .circuit-item-label {
-      font-size: 8px;
-      color: var(--muted);
-      text-align: center;
-      line-height: 1.3;
-      width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap
     }
 
     /* POPUPS */
@@ -824,35 +687,17 @@
       <div id="icons-panel">
         <div id="iph">
           <div id="iph-title">
-            <span>🏁 BIBLIOTHÈQUE GT7</span>
+            <span>🏁 ICÔNES GT7</span>
             <button class="lbtn" onclick="toggleIcons()" style="font-size:16px">×</button>
           </div>
+          <input id="icon-search" placeholder="Rechercher une icône…" oninput="filterIcons(this.value)">
         </div>
-        <!-- Tabs -->
-        <div class="panel-tabs">
-          <button class="panel-tab active" id="tab-icons" onclick="switchPanelTab('icons')">⬡ Icônes</button>
-          <button class="panel-tab" id="tab-circuits" onclick="switchPanelTab('circuits')">🗺 Circuits</button>
-        </div>
-        <!-- Icônes tab -->
-        <div class="panel-content active" id="pane-icons">
-          <div style="padding:8px 8px 0">
-            <input id="icon-search" placeholder="Rechercher une icône…" oninput="filterIcons(this.value)"
-              style="width:100%;background:var(--input);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:5px 8px;font-size:12px;height:28px">
-          </div>
-          <div id="icons-scroll"></div>
-        </div>
-        <!-- Circuits tab -->
-        <div class="panel-content" id="pane-circuits">
-          <div id="circuits-content">
-            <input id="circuit-search" placeholder="Rechercher un circuit…" oninput="filterCircuits(this.value)">
-          </div>
-          <div id="circuits-scroll"></div>
-        </div>
+        <div id="icons-scroll"></div>
       </div>
 
       <!-- Size input for icon -->
       <div id="icon-size-bar"
-        style="display:none;position:absolute;bottom:0;left:290px;right:0;background:#111;border-top:1px solid var(--border);padding:6px 12px;z-index:24;display:none;align-items:center;gap:10px;">
+        style="display:none;position:absolute;bottom:0;left:260px;right:0;background:#111;border-top:1px solid var(--border);padding:6px 12px;z-index:24;display:none;align-items:center;gap:10px;">
         <span style="font-size:11px;color:var(--muted)">Taille icône :</span>
         <input type="range" id="icon-size-range" min="40" max="600" value="120" style="width:120px"
           oninput="document.getElementById('icon-size-num').value=this.value">
@@ -1112,6 +957,7 @@
           { id: 'n300', label: 'N300', color: '#69f0ae', svg: `<rect x="8" y="16" width="48" height="32" rx="4" fill="none" stroke="COLOR" stroke-width="2.5"/><text x="32" y="38" text-anchor="middle" font-size="14" font-weight="bold" fill="COLOR" font-family="Arial">N300</text>` },
           { id: 'sport', label: 'Sport Mode', color: '#ffffff', svg: `<path d="M12 48 L32 8 L52 48Z" fill="none" stroke="COLOR" stroke-width="3"/><line x1="32" y1="20" x2="32" y2="38" stroke="COLOR" stroke-width="2.5"/><circle cx="32" cy="43" r="2.5" fill="COLOR"/>` },
           { id: 'online', label: 'Online Race', color: '#40c4ff', svg: `<circle cx="32" cy="32" r="24" fill="none" stroke="COLOR" stroke-width="2.5"/><path d="M14 24 Q20 16 32 16 Q44 16 50 24" fill="none" stroke="COLOR" stroke-width="2"/><path d="M14 40 Q20 48 32 48 Q44 48 50 40" fill="none" stroke="COLOR" stroke-width="2"/><line x1="8" y1="32" x2="56" y2="32" stroke="COLOR" stroke-width="2"/><line x1="32" y1="8" x2="32" y2="56" stroke="COLOR" stroke-width="2"/>` },
+          { id: 'kcfr', label: 'KCFR Badge', color: '#ccff00', svg: `<circle cx="32" cy="32" r="28" fill="none" stroke="COLOR" stroke-width="3"/><path d="M8 32 A24 24 0 0 1 56 32" fill="none" stroke="COLOR" stroke-width="2" stroke-dasharray="3 2"/><text x="32" y="24" text-anchor="middle" font-size="8" font-weight="bold" fill="COLOR" font-family="Arial">TEAM</text><text x="32" y="35" text-anchor="middle" font-size="13" font-weight="bold" fill="COLOR" font-family="Arial">KCFR</text><text x="32" y="45" text-anchor="middle" font-size="5.5" fill="COLOR" font-family="Arial">KEEP COOL FRENCH RACING</text>` },
         ]
       },
     ];
@@ -1353,9 +1199,7 @@
     function toggleIcons() {
       const p = document.getElementById('icons-panel'); const o = p.classList.toggle('open');
       document.getElementById('btn-icons').classList.toggle('active', o);
-      const sb = document.getElementById('icon-size-bar');
-      const iconsActive = document.getElementById('tab-icons').classList.contains('active');
-      sb.style.display = (o && iconsActive) ? 'flex' : 'none';
+      const sb = document.getElementById('icon-size-bar'); sb.style.display = o ? 'flex' : 'none';
     }
 
     /* ===== ZOOM ===== */
@@ -1394,371 +1238,17 @@
     /* ===== EXPORT ===== */
     function exportPNG() {
       const old = selId; selId = null; render(); SX.clearRect(0, 0, 1920, 1080);
-      const a = document.createElement('a'); a.download = 'Affiche_Course_TZR.png'; a.href = CV.toDataURL('image/png'); a.click();
+      const a = document.createElement('a'); a.download = 'Affiche_Course.png'; a.href = CV.toDataURL('image/png'); a.click();
       selId = old; render(); toast('Export PNG 1920×1080 lancé !');
     }
 
-    /* ===== PANEL TABS ===== */
-    function switchPanelTab(tab) {
-      document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.panel-content').forEach(p => p.classList.remove('active'));
-      document.getElementById('tab-' + tab).classList.add('active');
-      document.getElementById('pane-' + tab).classList.add('active');
-      // show/hide icon-size-bar only for icons tab
-      const sb = document.getElementById('icon-size-bar');
-      if (sb) sb.style.display = (tab === 'icons' && document.getElementById('icons-panel').classList.contains('open')) ? 'flex' : 'none';
-    }
-
-    /* ===== GT7 CIRCUITS DATA ===== */
-    const BASE_URL = 'https://gt-engine.com/gt7/tracks/images/md/';
-    const GT7_CIRCUITS = [
-      {
-        cat: '24 Heures du Mans', items: [
-          { id: '24-heures-du-mans', label: 'Le Mans' },
-          { id: '24-heures-du-mans-no-chicane', label: 'Le Mans No Chicane' },
-        ]
-      },
-      {
-        cat: 'Alsace', items: [
-          { id: 'alsace-village', label: 'Village' },
-          { id: 'alsace-village-2', label: 'Village Reverse' },
-          { id: 'alsace-test', label: 'Test Course' },
-          { id: 'alsace-test-2', label: 'Test Course Reverse' },
-        ]
-      },
-      {
-        cat: 'Autopolis', items: [
-          { id: 'autopolis', label: 'Autopolis' },
-          { id: 'autopolis-shortcut', label: 'Shortcut' },
-        ]
-      },
-      {
-        cat: 'Barcelona-Catalunya', items: [
-          { id: 'barcelona-catalunya-gp', label: 'GP' },
-          { id: 'barcelona-catalunya-gp-no-chicane', label: 'GP No Chicane' },
-          { id: 'barcelona-catalunya-national', label: 'National' },
-          { id: 'barcelona-catalunya-rallycross', label: 'Rallycross' },
-        ]
-      },
-      {
-        cat: 'Blue Moon Bay', items: [
-          { id: 'blue-moon-speedway', label: 'Speedway' },
-          { id: 'blue-moon-speedway-2', label: 'Speedway Rev.' },
-          { id: 'blue-moon-infield-a', label: 'Infield A' },
-          { id: 'blue-moon-infield-a2', label: 'Infield A Rev.' },
-          { id: 'blue-moon-infield-b', label: 'Infield B' },
-          { id: 'blue-moon-infield-b2', label: 'Infield B Rev.' },
-        ]
-      },
-      {
-        cat: 'Brands Hatch', items: [
-          { id: 'brands-hatch-gp', label: 'GP' },
-          { id: 'brands-hatch-indy', label: 'Indy' },
-        ]
-      },
-      {
-        cat: 'Broad Bean', items: [
-          { id: 'broad-bean', label: 'Broad Bean' },
-          { id: 'broad-bean-2', label: 'Reverse' },
-        ]
-      },
-      {
-        cat: 'Colorado Springs', items: [
-          { id: 'colorado-springs-lake', label: 'Lake' },
-          { id: 'colorado-springs-lake-2', label: 'Lake Reverse' },
-        ]
-      },
-      {
-        cat: 'Daytona', items: [
-          { id: 'daytona-tri-oval', label: 'Tri-Oval' },
-          { id: 'daytona-road', label: 'Road Course' },
-        ]
-      },
-      {
-        cat: 'Deep Forest', items: [
-          { id: 'deep-forest', label: 'Deep Forest' },
-          { id: 'deep-forest-2', label: 'Reverse' },
-        ]
-      },
-      {
-        cat: 'Dragon Trail', items: [
-          { id: 'dragon-trail-seaside', label: 'Seaside' },
-          { id: 'dragon-trail-seaside-2', label: 'Seaside Rev.' },
-          { id: 'dragon-trail-gardens', label: 'Gardens' },
-          { id: 'dragon-trail-gardens-2', label: 'Gardens Rev.' },
-        ]
-      },
-      {
-        cat: 'Eiger Nordwand', items: [
-          { id: 'eiger-nordwand', label: 'Eiger Nordwand' },
-          { id: 'eiger-nordwand-2', label: 'Reverse' },
-        ]
-      },
-      {
-        cat: 'Fishermans Ranch', items: [
-          { id: 'fishermans-ranch', label: 'Fishermans Ranch' },
-          { id: 'fishermans-ranch-2', label: 'Reverse' },
-        ]
-      },
-      {
-        cat: 'Fuji', items: [
-          { id: 'fuji', label: 'Fuji' },
-          { id: 'fuji-short', label: 'Short' },
-        ]
-      },
-      {
-        cat: 'Gilles-Villeneuve', items: [
-          { id: 'gilles-villeneuve', label: 'Gilles-Villeneuve' },
-        ]
-      },
-      {
-        cat: 'Goodwood', items: [
-          { id: 'goodwood', label: 'Goodwood' },
-        ]
-      },
-      {
-        cat: 'Grand Valley', items: [
-          { id: 'grand-valley-highway-1', label: 'Highway 1' },
-          { id: 'grand-valley-highway-1-2', label: 'Highway 1 Rev.' },
-          { id: 'grand-valley-south', label: 'South' },
-          { id: 'grand-valley-south-2', label: 'South Reverse' },
-        ]
-      },
-      {
-        cat: 'High Speed Ring', items: [
-          { id: 'high-speed-ring', label: 'High Speed Ring' },
-          { id: 'high-speed-ring-2', label: 'Reverse' },
-        ]
-      },
-      {
-        cat: 'Interlagos', items: [
-          { id: 'interlagos', label: 'Interlagos' },
-        ]
-      },
-      {
-        cat: 'Kyoto Driving Park', items: [
-          { id: 'kyoto-miyabi', label: 'Miyabi' },
-          { id: 'kyoto-yamagiwa', label: 'Yamagiwa' },
-          { id: 'kyoto-yamagiwa-2', label: 'Yamagiwa Rev.' },
-          { id: 'kyoto-yamagiwa-miyabi', label: 'Yamagiwa+Miyabi' },
-          { id: 'kyoto-yamagiwa-miyabi-2', label: 'Y+M Reverse' },
-        ]
-      },
-      {
-        cat: 'Lago Maggiore', items: [
-          { id: 'lago-maggiore-full', label: 'Full Course' },
-          { id: 'lago-maggiore-full-2', label: 'Full Rev.' },
-          { id: 'lago-maggiore-centre', label: 'Centre' },
-          { id: 'lago-maggiore-centre-2', label: 'Centre Rev.' },
-          { id: 'lago-maggiore-east', label: 'East' },
-          { id: 'lago-maggiore-east-2', label: 'East Rev.' },
-          { id: 'lago-maggiore-east-end', label: 'East End' },
-          { id: 'lago-maggiore-east-end-2', label: 'East End Rev.' },
-          { id: 'lago-maggiore-west', label: 'West' },
-          { id: 'lago-maggiore-west-2', label: 'West Rev.' },
-          { id: 'lago-maggiore-west-end', label: 'West End' },
-          { id: 'lago-maggiore-west-end-2', label: 'West End Rev.' },
-        ]
-      },
-      {
-        cat: 'Laguna Seca', items: [
-          { id: 'laguna-seca', label: 'Laguna Seca' },
-        ]
-      },
-      {
-        cat: 'Lake Louise', items: [
-          { id: 'lake-louise-long', label: 'Long Track' },
-          { id: 'lake-louise-long-2', label: 'Long Rev.' },
-          { id: 'lake-louise-short', label: 'Short Track' },
-          { id: 'lake-louise-short-2', label: 'Short Rev.' },
-          { id: 'lake-louise-tri-oval', label: 'Tri-Oval' },
-          { id: 'lake-louise-tri-oval-2', label: 'Tri-Oval Rev.' },
-        ]
-      },
-      {
-        cat: 'Monza', items: [
-          { id: 'monza', label: 'Monza' },
-          { id: 'monza-no-chicane', label: 'No Chicane' },
-        ]
-      },
-      {
-        cat: 'Mount Panorama', items: [
-          { id: 'mount-panorama', label: 'Bathurst' },
-        ]
-      },
-      {
-        cat: 'Northern Isle', items: [
-          { id: 'northern-isle', label: 'Northern Isle' },
-          { id: 'northern-isle-infield', label: 'Infield' },
-        ]
-      },
-      {
-        cat: 'Nürburgring', items: [
-          { id: 'nurburgring-24h', label: '24h' },
-          { id: 'nurburgring-endurance', label: 'Endurance' },
-          { id: 'nurburgring-endurance-2', label: 'Endurance II' },
-          { id: 'nurburgring-nordschleife', label: 'Nordschleife' },
-          { id: 'nurburgring-nordschleife-tourist', label: 'Tourist' },
-          { id: 'nurburgring-gp', label: 'GP' },
-          { id: 'nurburgring-sprint', label: 'Sprint' },
-        ]
-      },
-      {
-        cat: 'Red Bull Ring', items: [
-          { id: 'red-bull-ring', label: 'Red Bull Ring' },
-          { id: 'red-bull-ring-short', label: 'Short' },
-        ]
-      },
-      {
-        cat: 'Road Atlanta', items: [
-          { id: 'road-atlanta', label: 'Road Atlanta' },
-        ]
-      },
-      {
-        cat: 'Sainte-Croix', items: [
-          { id: 'sainte-croix-a', label: 'A' },
-          { id: 'sainte-croix-a2', label: 'A Reverse' },
-          { id: 'sainte-croix-b', label: 'B' },
-          { id: 'sainte-croix-b2', label: 'B Reverse' },
-          { id: 'sainte-croix-c', label: 'C' },
-          { id: 'sainte-croix-c2', label: 'C Reverse' },
-        ]
-      },
-      {
-        cat: 'Sardegna', items: [
-          { id: 'sardegna-road-a', label: 'Road A' },
-          { id: 'sardegna-road-a2', label: 'Road A Rev.' },
-          { id: 'sardegna-road-b', label: 'Road B' },
-          { id: 'sardegna-road-b2', label: 'Road B Rev.' },
-          { id: 'sardegna-road-c', label: 'Road C' },
-          { id: 'sardegna-road-c2', label: 'Road C Rev.' },
-          { id: 'sardegna-windmills', label: 'Windmills' },
-          { id: 'sardegna-windmills-2', label: 'Windmills Rev.' },
-        ]
-      },
-      {
-        cat: 'Spa-Francorchamps', items: [
-          { id: 'spa-francorchamps', label: 'Spa' },
-          { id: 'spa-24h', label: 'Spa 24h' },
-        ]
-      },
-      {
-        cat: 'Special Stage', items: [
-          { id: 'special-stage-route-x', label: 'Route X' },
-        ]
-      },
-      {
-        cat: 'Suzuka', items: [
-          { id: 'suzuka', label: 'Suzuka' },
-          { id: 'suzuka-east', label: 'East' },
-        ]
-      },
-      {
-        cat: 'Tokyo Expressway', items: [
-          { id: 'tokyo-express-central-cw', label: 'Central CW' },
-          { id: 'tokyo-express-central-ccw', label: 'Central CCW' },
-          { id: 'tokyo-express-east-cw', label: 'East CW' },
-          { id: 'tokyo-express-east-ccw', label: 'East CCW' },
-          { id: 'tokyo-express-south-cw', label: 'South CW' },
-          { id: 'tokyo-express-south-ccw', label: 'South CCW' },
-        ]
-      },
-      {
-        cat: 'Trial Mountain', items: [
-          { id: 'trial-mountain', label: 'Trial Mountain' },
-          { id: 'trial-mountain-2', label: 'Reverse' },
-        ]
-      },
-      {
-        cat: 'Tsukuba', items: [
-          { id: 'tsukuba', label: 'Tsukuba' },
-        ]
-      },
-      {
-        cat: 'Watkins Glen', items: [
-          { id: 'watkins-glen-long', label: 'Long Course' },
-          { id: 'watkins-glen-short', label: 'Short Course' },
-        ]
-      },
-      {
-        cat: 'Willow Springs', items: [
-          { id: 'willow-springs-big-willow', label: 'Big Willow' },
-          { id: 'willow-springs-horse-thief-mile', label: 'Horse Thief' },
-          { id: 'willow-springs-horse-thief-mile-2', label: 'Horse Thief Rev.' },
-          { id: 'willow-springs-streets-of-willow-springs', label: 'Streets' },
-          { id: 'willow-springs-streets-of-willow-springs-2', label: 'Streets Rev.' },
-        ]
-      },
-      {
-        cat: 'Yas Marina', items: [
-          { id: 'yas-marina', label: 'Yas Marina' },
-        ]
-      },
-    ];
-
-    /* ===== BUILD CIRCUITS PANEL ===== */
-    function buildCircuitsPanel(filter = '') {
-      const scroll = document.getElementById('circuits-scroll');
-      scroll.innerHTML = '';
-      const q = filter.toLowerCase().trim();
-      for (const cat of GT7_CIRCUITS) {
-        const items = q ? cat.items.filter(i => i.label.toLowerCase().includes(q) || cat.cat.toLowerCase().includes(q)) : cat.items;
-        if (!items.length) continue;
-        const div = document.createElement('div'); div.className = 'circuit-category';
-        div.innerHTML = `<div class="circuit-cat-title">${cat.cat}</div><div class="circuit-grid"></div>`;
-        scroll.appendChild(div);
-        const grid = div.querySelector('.circuit-grid');
-        for (const circuit of items) {
-          const item = document.createElement('div'); item.className = 'circuit-item';
-          item.title = `Ajouter : ${cat.cat} — ${circuit.label}`;
-          const imgUrl = BASE_URL + circuit.id + '.png';
-          item.innerHTML = `<img src="${imgUrl}" alt="${circuit.label}" loading="lazy" onerror="this.style.opacity='0.2'"><span class="circuit-item-label">${circuit.label}</span>`;
-          item.addEventListener('click', () => addCircuitImage(circuit, cat.cat, imgUrl));
-          grid.appendChild(item);
-        }
-      }
-    }
-
-    function filterCircuits(v) { buildCircuitsPanel(v) }
-
-    function addCircuitImage(circuit, catName, imgUrl) {
-      const img = new Image();
-      img.onload = () => {
-        const ratio = img.height / img.width;
-        const w = 400, h = Math.round(w * ratio);
-        const el = { id: mkId(), type: 'image', name: catName + ' — ' + circuit.label, visible: true, x: 760, y: 540 - h / 2, w, h, opacity: 1, rotation: 0, img };
-        elements.push(el); selId = el.id;
-        render(); renderLayers(); renderPropsBar();
-        toast('Circuit ajouté : ' + circuit.label);
-      };
-      img.onerror = () => {
-        fetch(imgUrl)
-          .then(r => r.blob())
-          .then(blob => {
-            const url = URL.createObjectURL(blob);
-            const img2 = new Image();
-            img2.onload = () => {
-              const ratio = img2.height / img2.width;
-              const w = 400, h = Math.round(w * ratio);
-              const el = { id: mkId(), type: 'image', name: catName + ' — ' + circuit.label, visible: true, x: 760, y: 540 - h / 2, w, h, opacity: 1, rotation: 0, img: img2 };
-              elements.push(el); selId = el.id;
-              render(); renderLayers(); renderPropsBar();
-              toast('Circuit ajouté : ' + circuit.label);
-            };
-            img2.src = url;
-          })
-          .catch(() => toast('Impossible de charger le circuit (CORS)'));
-      };
-      img.src = imgUrl;
-    }
-
-
+    /* ===== TOAST ===== */
     function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = 'none', 2200) }
 
     /* ===== INIT ===== */
     (function init() {
       const lnk = document.createElement('link'); lnk.rel = 'stylesheet'; lnk.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,700;1,400;1,700&display=swap'; document.head.appendChild(lnk);
-      fitZoom(); renderFontSel(); buildIconsPanel(); buildCircuitsPanel(); render();
+      fitZoom(); renderFontSel(); buildIconsPanel(); render();
     })();
   </script>
 </body>
