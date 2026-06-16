@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Éditeur d'Affiche de Course</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --bg: #0d0d0d;
+      --panel: #161616;
+      --border: #262626;
+      --accent: #D90429;
+      --text: #e0e0e0;
+      --muted: #666;
+      --input: #111;
+      --hover: #1e1e1e;
+      --sel: #2a0a10;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 13px
+    }
+
+    #app {
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      grid-template-rows: 1fr 52px;
+      height: 100vh
+    }
+
+    #sidebar {
+      grid-row: 1/3;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 0;
+      gap: 4px;
+      z-index: 10;
+      overflow-y: auto;
+      overflow-x: hidden
+    }
+
+    #canvas-area {
+      background: #080808;
+      overflow: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative
+    }
+
+    #bottombar {
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+      padding: 0 8px
+    }
+
+    .sb-btn {
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all .15s;
+      border: none;
+      background: none;
+      flex-shrink: 0
+    }
+
+    .sb-btn:hover {
+      background: var(--hover);
+      color: var(--text)
+    }
+
+    .sb-btn.active {
+      background: var(--accent);
+      color: #fff
+    }
+
+    .sb-btn svg {
+      pointer-events: none
+    }
+
+    .sb-sep {
+      width: 30px;
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+      flex-shrink: 0
+    }
+
+    .sb-lbl {
+      font-size: 8px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.2;
+      margin-top: -2px;
+      flex-shrink: 0
+    }
+
+    #canvas-container {
+      position: relative;
+      transform-origin: center center
+    }
+
+    #main-canvas {
+      display: block
+    }
+
+    #sel-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none
+    }
+
+    .bbar-sep {
+      width: 1px;
+      height: 32px;
+      background: var(--border);
+      flex-shrink: 0;
+      margin: 0 2px
+    }
+
+    .bbar-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0
+    }
+
+    .bbar-label {
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap
+    }
+
+    .bbar-input {
+      background: var(--input);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      padding: 3px 6px;
+      font-size: 12px;
+      height: 28px
+    }
+
+    .bbar-input:focus {
+      outline: none;
+      border-color: var(--accent)
+    }
+
+    .bbar-input[type=color] {
+      padding: 1px 2px;
+      width: 34px;
+      cursor: pointer
+    }
+
+    .bbar-input.font-sel {
+      width: 130px
+    }
+
+    .bbar-input.sn {
+      width: 50px
+    }
+
+    .bbar-btn {
+      height: 28px;
+      padding: 0 8px;
+      background: var(--hover);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 4px
+    }
+
+    .bbar-btn:hover {
+      background: #2a2a2a
+    }
+
+    .bbar-btn.ton {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff
+    }
+
+    #no-sel-msg {
+      font-size: 12px;
+      color: var(--muted);
+      padding: 0 12px
+    }
+
+    #export-btn {
+      margin-left: auto;
+      height: 32px;
+      padding: 0 14px;
+      background: var(--accent);
+      border: none;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: .5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0
+    }
+
+    #export-btn:hover {
+      background: #f0041e
+    }
+
+    #zoom-bar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-right: 8px;
+      flex-shrink: 0
+    }
+
+    .zoom-btn {
+      width: 24px;
+      height: 24px;
+      background: var(--hover);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    #zoom-val {
+      font-size: 11px;
+      color: var(--muted);
+      min-width: 36px;
+      text-align: center
+    }
+
+    /* LAYERS */
+    #layers-panel {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 220px;
+      background: var(--panel);
+      border-left: 1px solid var(--border);
+      display: none;
+      flex-direction: column;
+      z-index: 20
+    }
+
+    #layers-panel.open {
+      display: flex
+    }
+
+    #lph {
+      padding: 10px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+    }
+
+    #layers-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px
+    }
+
+    .layer-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      margin-bottom: 2px
+    }
+
+    .layer-item:hover {
+      background: var(--hover)
+    }
+
+    .layer-item.sel {
+      border-color: var(--accent);
+      background: var(--sel)
+    }
+
+    .li-icon {
+      font-size: 13px;
+      flex-shrink: 0;
+      width: 16px;
+      text-align: center
+    }
+
+    .li-name {
+      flex: 1;
+      font-size: 11px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .lbtn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 11px;
+      padding: 1px 3px;
+      border-radius: 3px
+    }
+
+    .lbtn:hover {
+      color: var(--text);
+      background: #333
+    }
+
+    /* ICONS PANEL */
+    #icons-panel {
+      position: absolute;
+      left: 54px;
+      top: 0;
+      bottom: 0;
+      width: 290px;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      display: none;
+      flex-direction: column;
+      z-index: 25
+    }
+
+    #icons-panel.open {
+      display: flex
+    }
+
+    #iph {
+      padding: 10px 12px 8px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0
+    }
+
+    #iph-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center
+    }
+
+    #icon-search {
+      width: 100%;
+      background: var(--input);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      padding: 5px 8px;
+      font-size: 12px;
+      height: 28px
+    }
+
+    #icon-search:focus {
+      outline: none;
+      border-color: var(--accent)
+    }
+
+    .panel-tabs {
+      display: flex;
+      gap: 0;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .panel-tab {
+      flex: 1;
+      padding: 7px 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      text-align: center;
+      cursor: pointer;
+      color: var(--muted);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all .15s;
+      text-transform: uppercase
+    }
+
+    .panel-tab:hover {
+      color: var(--text)
+    }
+
+    .panel-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent)
+    }
+
+    .panel-content {
+      display: none;
+      flex: 1;
+      overflow: hidden;
+      flex-direction: column
+    }
+
+    .panel-content.active {
+      display: flex
+    }
+
+    #icons-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px
+    }
+
+    .icon-category {
+      margin-bottom: 14px
+    }
+
+    .icon-cat-title {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      margin-bottom: 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .icon-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px
+    }
+
+    .icon-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all .15s
+    }
+
+    .icon-item:hover {
+      background: var(--hover);
+      border-color: var(--border)
+    }
+
+    .icon-item:active {
+      background: var(--sel);
+      border-color: var(--accent)
+    }
+
+    .icon-item svg {
+      display: block
+    }
+
+    .icon-item-label {
+      font-size: 9px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%
+    }
+
+    /* CIRCUITS PANEL */
+    #circuits-content {
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0
+    }
+
+    #circuit-search {
+      width: 100%;
+      background: var(--input);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      padding: 5px 8px;
+      font-size: 12px;
+      height: 28px
+    }
+
+    #circuit-search:focus {
+      outline: none;
+      border-color: var(--accent)
+    }
+
+    #circuits-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 8px
+    }
+
+    .circuit-category {
+      margin-bottom: 12px
+    }
+
+    .circuit-cat-title {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .circuit-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px
+    }
+
+    .circuit-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--input);
+      transition: all .15s
+    }
+
+    .circuit-item:hover {
+      background: var(--hover);
+      border-color: var(--accent)
+    }
+
+    .circuit-item:active {
+      border-color: var(--accent);
+      background: var(--sel)
+    }
+
+    .circuit-item img {
+      width: 100%;
+      height: 56px;
+      object-fit: contain;
+      border-radius: 3px;
+      filter: invert(1) brightness(0.8)
+    }
+
+    .circuit-item-label {
+      font-size: 8px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.3;
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    /* POPUPS */
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #1a1a1a;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      z-index: 100;
+      min-width: 300px;
+      box-shadow: 0 8px 32px #000a
+    }
+
+    .popup h3 {
+      font-size: 14px;
+      margin-bottom: 14px;
+      color: var(--text)
+    }
+
+    .popup-close {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 18px;
+      cursor: pointer;
+      line-height: 1
+    }
+
+    .popup-close:hover {
+      color: var(--text)
+    }
+
+    #font-drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 13px;
+      transition: border-color .2s;
+      margin-bottom: 12px
+    }
+
+    #font-drop-zone:hover,
+    #font-drop-zone.drag-over {
+      border-color: var(--accent);
+      color: var(--text)
+    }
+
+    #font-list-loaded {
+      font-size: 11px;
+      color: var(--muted);
+      max-height: 100px;
+      overflow-y: auto
+    }
+
+    .fli {
+      padding: 3px 0;
+      border-bottom: 1px solid var(--border)
+    }
+
+    /* SIZE POPUP */
+    #size-popup input {
+      width: 80px;
+      margin-left: 8px
+    }
+
+    .size-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #2a2a2a;
+      border-radius: 3px
+    }
+
+    input[type=file] {
+      display: none
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a1a1a;
+      border: 1px solid var(--accent);
+      color: var(--text);
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      display: none;
+      z-index: 999;
+      pointer-events: none
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+      <div
+        style="color:var(--accent);font-size:7px;font-weight:700;letter-spacing:.5px;margin-bottom:6px;text-align:center;line-height:1.3">
+        ÉDITEUR<br>AFFICHE</div>
+      <div class="sb-sep"></div>
+
+      <!-- Add elements -->
+      <button class="sb-btn" onclick="addEl('text')" title="Texte (T)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="4 7 4 4 20 4 20 7" />
+          <line x1="9" y1="20" x2="15" y2="20" />
+          <line x1="12" y1="4" x2="12" y2="20" />
+        </svg>
+      </button>
+      <button class="sb-btn" onclick="addEl('rect')" title="Rectangle">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+        </svg>
+      </button>
+      <button class="sb-btn" onclick="addEl('ellipse')" title="Ellipse">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <ellipse cx="12" cy="12" rx="10" ry="6" />
+        </svg>
+      </button>
+      <button class="sb-btn" onclick="addEl('line')" title="Ligne">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="4" y1="20" x2="20" y2="4" />
+        </svg>
+      </button>
+      <button class="sb-btn" onclick="document.getElementById('img-input').click()" title="Image / Logo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <circle cx="8.5" cy="8.5" r="1.5" />
+          <polyline points="21 15 16 10 5 21" />
+        </svg>
+      </button>
+
+      <div class="sb-sep"></div>
+
+      <!-- GT7 Icons -->
+      <button class="sb-btn" id="btn-icons" onclick="toggleIcons()" title="Icônes GT7">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <circle cx="12" cy="12" r="3" />
+          <line x1="12" y1="2" x2="12" y2="5" />
+          <line x1="12" y1="19" x2="12" y2="22" />
+          <line x1="2" y1="12" x2="5" y2="12" />
+          <line x1="19" y1="12" x2="22" y2="12" />
+        </svg>
+      </button>
+      <div class="sb-lbl">GT7</div>
+
+      <div class="sb-sep"></div>
+
+      <!-- Font / BG -->
+      <button class="sb-btn" onclick="openPopup('font-popup')" title="Importer police">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 7V4h16v3" />
+          <path d="M9 20h6" />
+          <path d="M12 4v16" />
+        </svg>
+      </button>
+      <div class="sb-lbl">Police</div>
+      <button class="sb-btn" onclick="openPopup('bg-popup')" title="Fond de toile">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="2" width="20" height="20" rx="2" />
+          <path d="M2 12h20M12 2v20" />
+        </svg>
+      </button>
+      <div class="sb-lbl">Fond</div>
+
+      <div class="sb-sep"></div>
+
+      <button class="sb-btn" onclick="duplicateSel()" title="Dupliquer (Ctrl+D)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+        </svg>
+      </button>
+      <button class="sb-btn" onclick="deleteSel()" title="Supprimer (Suppr)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+        </svg>
+      </button>
+      <button class="sb-btn" id="btn-layers" onclick="toggleLayers()" title="Calques">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 2 7 12 12 22 7 12 2" />
+          <polyline points="2 17 12 22 22 17" />
+          <polyline points="2 12 12 17 22 12" />
+        </svg>
+      </button>
+      <div class="sb-lbl">Calques</div>
+    </div>
+
+    <!-- CANVAS AREA -->
+    <div id="canvas-area">
+
+      <!-- GT7 ICONS PANEL -->
+      <div id="icons-panel">
+        <div id="iph">
+          <div id="iph-title">
+            <span>🏁 BIBLIOTHÈQUE GT7</span>
+            <button class="lbtn" onclick="toggleIcons()" style="font-size:16px">×</button>
+          </div>
+        </div>
+        <!-- Tabs -->
+        <div class="panel-tabs">
+          <button class="panel-tab active" id="tab-icons" onclick="switchPanelTab('icons')">⬡ Icônes</button>
+          <button class="panel-tab" id="tab-circuits" onclick="switchPanelTab('circuits')">🗺 Circuits</button>
+        </div>
+        <!-- Icônes tab -->
+        <div class="panel-content active" id="pane-icons">
+          <div style="padding:8px 8px 0">
+            <input id="icon-search" placeholder="Rechercher une icône…" oninput="filterIcons(this.value)"
+              style="width:100%;background:var(--input);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:5px 8px;font-size:12px;height:28px">
+          </div>
+          <div id="icons-scroll"></div>
+        </div>
+        <!-- Circuits tab -->
+        <div class="panel-content" id="pane-circuits">
+          <div id="circuits-content">
+            <input id="circuit-search" placeholder="Rechercher un circuit…" oninput="filterCircuits(this.value)">
+          </div>
+          <div id="circuits-scroll"></div>
+        </div>
+      </div>
+
+      <!-- Size input for icon -->
+      <div id="icon-size-bar"
+        style="display:none;position:absolute;bottom:0;left:290px;right:0;background:#111;border-top:1px solid var(--border);padding:6px 12px;z-index:24;display:none;align-items:center;gap:10px;">
+        <span style="font-size:11px;color:var(--muted)">Taille icône :</span>
+        <input type="range" id="icon-size-range" min="40" max="600" value="120" style="width:120px"
+          oninput="document.getElementById('icon-size-num').value=this.value">
+        <input type="number" id="icon-size-num" min="40" max="600" value="120"
+          style="width:60px;background:var(--input);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:3px 6px;font-size:12px;height:26px"
+          oninput="document.getElementById('icon-size-range').value=this.value">
+        <span style="font-size:11px;color:var(--muted)">px · Couleur :</span>
+        <input type="color" id="icon-color" value="#ffffff"
+          style="width:34px;height:26px;padding:1px 2px;background:var(--input);border:1px solid var(--border);border-radius:4px;cursor:pointer">
+        <span style="font-size:11px;color:var(--muted)">Clic sur une icône pour l'ajouter</span>
+      </div>
+
+      <div id="canvas-container">
+        <canvas id="main-canvas" width="1920" height="1080"></canvas>
+        <canvas id="sel-canvas" width="1920" height="1080"></canvas>
+      </div>
+
+      <!-- LAYERS PANEL -->
+      <div id="layers-panel">
+        <div id="lph">CALQUES <button class="lbtn" onclick="toggleLayers()" style="font-size:16px">×</button></div>
+        <div id="layers-list"></div>
+      </div>
+    </div>
+
+    <!-- BOTTOM BAR -->
+    <div id="bottombar">
+      <div id="zoom-bar">
+        <button class="zoom-btn" onclick="doZoom(-0.1)">−</button>
+        <span id="zoom-val">60%</span>
+        <button class="zoom-btn" onclick="doZoom(0.1)">+</button>
+        <button class="bbar-btn" onclick="fitZoom()" style="padding:0 6px;height:24px;font-size:10px">Ajuster</button>
+      </div>
+      <div class="bbar-sep"></div>
+      <span id="no-sel-msg">← Ajoute un élément ou sélectionne en sur le canvas</span>
+      <div id="props-bar" style="display:none;align-items:center;gap:6px;flex:1;overflow:hidden">
+        <div class="bbar-group">
+          <span class="bbar-label">X</span><input class="bbar-input sn" type="number" id="p-x"
+            oninput="sp('x',+this.value)">
+          <span class="bbar-label">Y</span><input class="bbar-input sn" type="number" id="p-y"
+            oninput="sp('y',+this.value)">
+        </div>
+        <div class="bbar-sep"></div>
+        <div class="bbar-group" id="grp-size">
+          <span class="bbar-label">L</span><input class="bbar-input sn" type="number" id="p-w"
+            oninput="sp('w',+this.value)">
+          <span class="bbar-label">H</span><input class="bbar-input sn" type="number" id="p-h"
+            oninput="sp('h',+this.value)">
+        </div>
+        <div class="bbar-sep" id="sep-size"></div>
+        <div class="bbar-group" id="grp-rot">
+          <span class="bbar-label">↻</span><input class="bbar-input sn" type="number" id="p-rot" min="-180" max="180"
+            oninput="sp('rotation',+this.value)">
+        </div>
+        <div class="bbar-sep" id="sep-rot"></div>
+        <div class="bbar-group">
+          <span class="bbar-label">Opacité</span>
+          <input class="bbar-input sn" type="number" id="p-opacity" min="0" max="100"
+            oninput="sp('opacity',+this.value/100)">
+          <span style="font-size:11px;color:var(--muted)">%</span>
+        </div>
+        <div class="bbar-sep"></div>
+        <div class="bbar-group" id="grp-fill">
+          <span class="bbar-label">Fond</span><input class="bbar-input" type="color" id="p-fill"
+            oninput="sp('fill',this.value)">
+          <span class="bbar-label">Contour</span><input class="bbar-input" type="color" id="p-sc"
+            oninput="sp('stroke',this.value)">
+          <input class="bbar-input sn" type="number" id="p-sw" min="0" oninput="sp('strokeWidth',+this.value)"
+            style="width:42px">
+        </div>
+        <div class="bbar-sep" id="sep-fill"></div>
+        <div class="bbar-group" id="grp-line">
+          <span class="bbar-label">Couleur</span><input class="bbar-input" type="color" id="p-lc"
+            oninput="sp('stroke',this.value)">
+          <span class="bbar-label">Ép.</span><input class="bbar-input sn" type="number" id="p-lw" min="1"
+            oninput="sp('strokeWidth',+this.value)">
+        </div>
+        <div class="bbar-sep" id="sep-line"></div>
+        <div class="bbar-group" id="grp-text">
+          <input class="bbar-input" id="p-text" placeholder="Texte…" oninput="sp('text',this.value)"
+            style="width:130px">
+          <select class="bbar-input font-sel" id="p-font" onchange="sp('font',this.value)"></select>
+          <input class="bbar-input sn" type="number" id="p-fs" min="8" max="999" oninput="sp('fontSize',+this.value)"
+            style="width:56px">
+          <input class="bbar-input" type="color" id="p-color" oninput="sp('color',this.value)">
+          <button class="bbar-btn" id="btn-bold" onclick="tog('bold','btn-bold')"><b>G</b></button>
+          <button class="bbar-btn" id="btn-italic" onclick="tog('italic','btn-italic')"><i>I</i></button>
+          <select class="bbar-input" id="p-align" onchange="sp('align',this.value)" style="width:72px">
+            <option value="left">Gauche</option>
+            <option value="center">Centre</option>
+            <option value="right">Droite</option>
+          </select>
+          <span class="bbar-label">Contour</span>
+          <input class="bbar-input" type="color" id="p-tsc" oninput="sp('strokeColor',this.value)">
+          <input class="bbar-input" type="number" id="p-tsw" min="0" max="30" oninput="sp('strokeWidth',+this.value)"
+            style="width:42px">
+          <button class="bbar-btn" id="btn-shadow" onclick="togShadow()">Ombre</button>
+        </div>
+        <!-- Icon color (shown for svg elements) -->
+        <div class="bbar-group" id="grp-icon">
+          <span class="bbar-label">Couleur icône</span>
+          <input class="bbar-input" type="color" id="p-icon-color" oninput="sp('iconColor',this.value);render()">
+        </div>
+        <div class="bbar-sep" id="sep-icon"></div>
+      </div>
+      <button id="export-btn" onclick="exportPNG()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        PNG 1920×1080
+      </button>
+    </div>
+  </div>
+
+  <!-- FONT POPUP -->
+  <div id="font-popup" class="popup">
+    <button class="popup-close" onclick="closePopup('font-popup')">×</button>
+    <h3>🔤 Importer une police</h3>
+    <div id="font-drop-zone" onclick="document.getElementById('font-input').click()"
+      ondragover="event.preventDefault();this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')" ondrop="handleFontDrop(event)">
+      Clique ou glisse un fichier police<br>
+      <span style="font-size:11px;color:var(--muted)">.ttf · .otf · .woff · .woff2</span>
+    </div>
+    <div id="font-list-loaded"><em>Aucune police importée</em></div>
+    <input type="file" id="font-input" accept=".ttf,.otf,.woff,.woff2" multiple onchange="handleFontFiles(this.files)">
+  </div>
+
+  <!-- BG POPUP -->
+  <div id="bg-popup" class="popup">
+    <button class="popup-close" onclick="closePopup('bg-popup')">×</button>
+    <h3>🎨 Fond de toile</h3>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span style="font-size:12px;color:var(--muted)">Couleur</span>
+      <input type="color" class="bbar-input" id="bg-color" value="#0a0a0a" oninput="bgCol=this.value;render()"
+        style="width:50px;height:34px">
+    </div>
+    <div style="margin-bottom:12px">
+      <button class="bbar-btn" onclick="document.getElementById('bg-input').click()"
+        style="width:100%;justify-content:center">📂 Image de fond</button>
+      <input type="file" id="bg-input" accept="image/*" onchange="handleBgFile(event)">
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <span style="font-size:12px;color:var(--muted)">Opacité</span>
+      <input type="range" id="bg-opacity" min="0" max="100" value="100"
+        oninput="bgOp=this.value/100;render();document.getElementById('bgopv').textContent=this.value+'%'"
+        style="flex:1">
+      <span id="bgopv" style="font-size:11px;color:var(--muted);min-width:34px">100%</span>
+    </div>
+    <button class="bbar-btn" onclick="bgImg=null;render()"
+      style="color:#f88;width:100%;justify-content:center">Supprimer image fond</button>
+  </div>
+
+  <input type="file" id="img-input" accept="image/*" onchange="handleImgFile(event)">
+  <div id="toast"></div>
+
+  <script>
+    const CV = document.getElementById('main-canvas'), CX = CV.getContext('2d');
+    const SC = document.getElementById('sel-canvas'), SX = SC.getContext('2d');
+    const container = document.getElementById('canvas-container');
+
+    let elements = [], selId = null, zoomLv = 0.6, bgCol = '#0a0a0a', bgImg = null, bgOp = 1;
+    let dragging = false, dOX = 0, dOY = 0, resizing = false, resH = '';
+    let idCtr = 1, customFonts = [];
+    const FONTS = ['Bebas Neue', 'Barlow Condensed', 'Arial', 'Impact', 'Georgia', 'Courier New', 'Verdana'];
+
+    /* ===== GT7 ICON LIBRARY ===== */
+    const GT7_ICONS = [
+      {
+        cat: 'Pneumatiques — Confort', items: [
+          { id: 'ct', label: 'Confort Tendre', color: '#e83535', svg: `<circle cx="32" cy="32" r="28" fill="none" stroke="COLOR" stroke-width="5"/><circle cx="32" cy="32" r="14" fill="none" stroke="COLOR" stroke-width="4"/><text x="32" y="29" text-anchor="middle" font-size="9" font-weight="bold" fill="COLOR" font-family="Arial">CH</text><text x="32" y="40" text-anchor="middle" font-size="9" font-weight="bold" fill="COLOR" font-family="Arial">T</text>` },
+          { id: 'cm', label: 'Confort Medium', color: '#f5a623', svg: `<circle cx="32" cy="32" r="28" fill="none" stroke="COLOR" stroke-width="5"/><circle cx="32" cy="32" r="14" fill="none" stroke="COLOR" stroke-width="4"/><text x="32" y="29" text-anchor="middle" font-size="9" font-weight="bold" fill="COLOR" font-family="Arial">CH</text><text x="32" y="40" text-anchor="middle" font-size="9" font-weight="bold" fill="COLOR" font-family="Arial">M</text>` },
+          { id: 'cd', label: 'Confort Dur', color: '#e0e0e0', svg: `<circle cx="32" cy="32" r="28" fill="none" stroke="COLOR" stroke-width="5"/><circle cx="32" cy="32" r="14" fill="none" stroke="COLOR" stroke-width="4"/><text x="32" y="29" text-anchor="middle" font-size="9" font-weight="bold" fill="COLOR" font-family="Arial">CH</text><text x="32" y="40" text-anchor="middle" font-size="9" font-weight="bold" fill="COLOR" font-family="Arial">D</text>` },
+        ]
+      },
+      {
+        cat: 'Pneumatiques — Sport', items: [
+          { id: 'st', label: 'Sport Tendre', color: '#e83535', svg: `<circle cx="32" cy="32" r="28" fill="none" stroke="COLOR" stroke-width="5"/><circle cx="32" cy="32" r="14" fill="none" stroke="COLOR" stroke-width="4"/><text x="32" y="29" text-anchor="middle" font-size="9" font-weight="bold" fill="COLOR" font-family="Arial">SP</text><text x="32" y="40" text-anchor="middle" font-size="9" font-weight="bold" fill="COLOR" font-family="Arial">T</text>` },
+          { id: 'sm', label: 'Sport Medium', color: '#f5a623', svg: `<circle cx="32" cy="32" r="28" fill="none" stroke="COLOR" stroke-width="5"/><circle cx="32" cy="32" r="14" fill="none" stroke="COLOR" stroke-width="4"/><text x="32" y="29" text-anchor="middle" font-size="9" font-weight="bold" fill="COLOR" font-family="Arial">SP</text><text x="32" y="40" text-anchor="middle" font-size="9" font-weight="bold" fill="COLOR" font-family="Arial">M</text>` },
+          { id: 'sd', label: 'Sport Dur', color: '#e0e0e0', svg: `<circle cx="32" cy="32" r="28" fill="none" stroke="COLOR" stroke-width="5"/><circle cx="32" cy="32" r="14" fill="none" stroke="COLOR" stroke-width="4"/><text x="32" y="29" text-anchor="middle" font-size="9" font-weight="bold" fill="COLOR" font-family="Arial">SP</text><text x="32" y="40" text-anchor="middle" font-size="9" font-weight="bold" fill="COLOR" font-family="Arial">D</text>` },
+        ]
+      },
+      {
+        cat: 'Pneumatiques — Course', items: [
+          { id: 'rt', label: 'Course Tendre', color: '#e83535', svg: `<circle cx="32" cy="32" r="28" fill="none" stroke="COLOR" stroke-width="5"/><circle cx="32" cy="32" r="14" fill="none" stroke="COLOR" stroke-width="4"/><text x="32" y="29" text-anchor="middle" font-size="9" font-weight="bold" fill="COLOR" font-family="Arial">RC</text><text x="32" y="40" text-anchor="middle" font-size="9" font-weight="bold" fill="COLOR" font-family="Arial">T</text>` },
+          { id: 'rm', label: 'Course Medium', color: '#f5a623', svg: `<circle cx="32" cy="32" r="28" fill="none" stroke="COLOR" stroke-width="5"/><circle cx="32" cy="32" r="14" fill="none" stroke="COLOR" stroke-width="4"/><text x="32" y="29" text-anchor="middle" font-size="9" font-weight="bold" fill="COLOR" font-family="Arial">RC</text><text x="32" y="40" text-anchor="middle" font-size="9" font-weight="bold" fill="COLOR" font-family="Arial">M</text>` },
+          { id: 'rd', label: 'Course Dur', color: '#e0e0e0', svg: `<circle cx="32" cy="32" r="28" fill="none" stroke="COLOR" stroke-width="5"/><circle cx="32" cy="32" r="14" fill="none" stroke="COLOR" stroke-width="4"/><text x="32" y="29" text-anchor="middle" font-size="9" font-weight="bold" fill="COLOR" font-family="Arial">RC</text><text x="32" y="40" text-anchor="middle" font-size="9" font-weight="bold" fill="COLOR" font-family="Arial">D</text>` },
+        ]
+      },
+      {
+        cat: 'Pneumatiques — Pluie', items: [
+          { id: 'tyre_inter', label: 'Intermédiaires', color: '#4caf50', svg: `<circle cx="32" cy="32" r="28" fill="none" stroke="COLOR" stroke-width="5"/><circle cx="32" cy="32" r="14" fill="none" stroke="COLOR" stroke-width="4"/><text x="32" y="37" text-anchor="middle" font-size="11" font-weight="bold" fill="COLOR" font-family="Arial">IM</text>` },
+          { id: 'tyre_wet', label: 'Pluie', color: '#2196f3', svg: `<circle cx="32" cy="32" r="28" fill="none" stroke="COLOR" stroke-width="5"/><circle cx="32" cy="32" r="14" fill="none" stroke="COLOR" stroke-width="4"/><text x="32" y="37" text-anchor="middle" font-size="11" font-weight="bold" fill="COLOR" font-family="Arial">RW</text>` },
+        ]
+      },
+      {
+        cat: 'Pit & Carburant', items: [
+          { id: 'fuel', label: 'Carburant', color: '#ff9800', svg: `<rect x="18" y="8" width="20" height="26" rx="3" fill="none" stroke="COLOR" stroke-width="3"/><rect x="26" y="4" width="12" height="6" rx="2" fill="none" stroke="COLOR" stroke-width="2.5"/><path d="M38 20 L44 17 L44 28 L38 25" fill="none" stroke="COLOR" stroke-width="2.5"/><line x1="24" y1="20" x2="32" y2="20" stroke="COLOR" stroke-width="2.5"/><line x1="28" y1="16" x2="28" y2="24" stroke="COLOR" stroke-width="2.5"/>` },
+          { id: 'pitstop', label: 'Pit Stop', color: '#ffffff', svg: `<path d="M8 44 L8 20 L28 20 L28 10 L56 10 L56 44Z" fill="none" stroke="COLOR" stroke-width="3"/><rect x="14" y="26" width="10" height="14" rx="1" fill="COLOR" opacity="0.6"/><rect x="30" y="26" width="20" height="14" rx="1" fill="none" stroke="COLOR" stroke-width="2"/><circle cx="20" cy="46" r="5" fill="none" stroke="COLOR" stroke-width="3"/><circle cx="46" cy="46" r="5" fill="none" stroke="COLOR" stroke-width="3"/>` },
+          { id: 'wrench', label: 'Mécanique', color: '#9e9e9e', svg: `<path d="M44 10 C48 6 54 8 54 14 C54 18 51 20 48 21 L28 41 C27 44 24 46 20 46 C16 46 13 43 14 39 L34 19 C33 16 35 13 38 11Z" fill="none" stroke="COLOR" stroke-width="3"/><circle cx="19" cy="41" r="4" fill="COLOR"/><line x1="10" y1="50" x2="28" y2="32" stroke="COLOR" stroke-width="3"/>` },
+          { id: 'clock', label: 'Temps', color: '#ffffff', svg: `<circle cx="32" cy="32" r="26" fill="none" stroke="COLOR" stroke-width="3"/><line x1="32" y1="32" x2="32" y2="14" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><line x1="32" y1="32" x2="44" y2="38" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><circle cx="32" cy="32" r="3" fill="COLOR"/>` },
+        ]
+      },
+      {
+        cat: 'Météo', items: [
+          { id: 'sun', label: 'Ensoleillé', color: '#FFD600', svg: `<circle cx="32" cy="32" r="12" fill="none" stroke="COLOR" stroke-width="3"/><line x1="32" y1="6" x2="32" y2="14" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><line x1="32" y1="50" x2="32" y2="58" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><line x1="6" y1="32" x2="14" y2="32" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><line x1="50" y1="32" x2="58" y2="32" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><line x1="13" y1="13" x2="19" y2="19" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><line x1="45" y1="45" x2="51" y2="51" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><line x1="51" y1="13" x2="45" y2="19" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><line x1="19" y1="45" x2="13" y2="51" stroke="COLOR" stroke-width="3" stroke-linecap="round"/>` },
+          { id: 'cloud', label: 'Nuageux', color: '#b0bec5', svg: `<path d="M48 40 C54 40 58 36 58 30 C58 24 53 20 47 20 C46 15 42 11 37 11 C31 11 27 15 26 20 C20 21 16 26 16 32 C16 37 20 40 26 40Z" fill="none" stroke="COLOR" stroke-width="3"/>` },
+          { id: 'rain', label: 'Pluie', color: '#42a5f5', svg: `<path d="M44 28 C50 28 54 24 54 18 C54 12 49 8 43 8 C42 4 38 1 33 1 C27 1 23 5 22 9 C16 10 12 15 12 21 C12 26 16 28 22 28Z" fill="none" stroke="COLOR" stroke-width="3"/><line x1="20" y1="36" x2="16" y2="48" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><line x1="30" y1="36" x2="26" y2="48" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><line x1="40" y1="36" x2="36" y2="48" stroke="COLOR" stroke-width="3" stroke-linecap="round"/>` },
+          { id: 'storm', label: 'Orage', color: '#FFD600', svg: `<path d="M44 28 C50 28 54 24 54 18 C54 12 49 8 43 8 C42 4 38 1 33 1 C27 1 23 5 22 9 C16 10 12 15 12 21 C12 26 16 28 22 28Z" fill="none" stroke="COLOR" stroke-width="3"/><polygon points="36,30 26,46 34,46 28,62 44,40 34,40" fill="COLOR"/>` },
+          { id: 'snow', label: 'Neige', color: '#90caf9', svg: `<line x1="32" y1="8" x2="32" y2="56" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><line x1="8" y1="32" x2="56" y2="32" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><line x1="14" y1="14" x2="50" y2="50" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><line x1="50" y1="14" x2="14" y2="50" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><circle cx="32" cy="32" r="4" fill="COLOR"/>` },
+          { id: 'temp_hot', label: 'Chaud', color: '#ef5350', svg: `<rect x="28" y="10" width="8" height="34" rx="4" fill="none" stroke="COLOR" stroke-width="2.5"/><circle cx="32" cy="48" r="8" fill="none" stroke="COLOR" stroke-width="2.5"/><rect x="30" y="22" width="4" height="22" rx="2" fill="COLOR"/><circle cx="32" cy="48" r="5" fill="COLOR"/><line x1="38" y1="18" x2="44" y2="18" stroke="COLOR" stroke-width="2.5"/><line x1="38" y1="26" x2="44" y2="26" stroke="COLOR" stroke-width="2.5"/><line x1="38" y1="34" x2="44" y2="34" stroke="COLOR" stroke-width="2.5"/>` },
+          { id: 'temp_cold', label: 'Froid', color: '#64b5f6', svg: `<rect x="28" y="10" width="8" height="34" rx="4" fill="none" stroke="COLOR" stroke-width="2.5"/><circle cx="32" cy="48" r="8" fill="none" stroke="COLOR" stroke-width="2.5"/><rect x="30" y="28" width="4" height="10" rx="2" fill="COLOR"/><circle cx="32" cy="48" r="5" fill="COLOR"/><line x1="38" y1="18" x2="44" y2="18" stroke="COLOR" stroke-width="2.5"/><line x1="38" y1="26" x2="44" y2="26" stroke="COLOR" stroke-width="2.5"/><line x1="38" y1="34" x2="44" y2="34" stroke="COLOR" stroke-width="2.5"/>` },
+        ]
+      },
+      {
+        cat: 'Course & Drapeaux', items: [
+          { id: 'flag_chk', label: 'Drapeau Arrivée', color: '#ffffff', svg: `<line x1="16" y1="8" x2="16" y2="56" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><rect x="16" y="8" width="8" height="8" fill="COLOR"/><rect x="24" y="8" width="8" height="8" fill="none"/><rect x="32" y="8" width="8" height="8" fill="COLOR"/><rect x="16" y="16" width="8" height="8" fill="none"/><rect x="24" y="16" width="8" height="8" fill="COLOR"/><rect x="32" y="16" width="8" height="8" fill="none"/><rect x="16" y="24" width="8" height="8" fill="COLOR"/><rect x="24" y="24" width="8" height="8" fill="none"/><rect x="32" y="24" width="8" height="8" fill="COLOR"/>` },
+          { id: 'flag_red', label: 'Drapeau Rouge', color: '#e53935', svg: `<line x1="16" y1="8" x2="16" y2="56" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><rect x="16" y="8" width="30" height="22" rx="2" fill="COLOR"/>` },
+          { id: 'flag_yellow', label: 'Drapeau Jaune', color: '#FFD600', svg: `<line x1="16" y1="8" x2="16" y2="56" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><rect x="16" y="8" width="30" height="22" rx="2" fill="COLOR"/>` },
+          { id: 'flag_blue', label: 'Drapeau Bleu', color: '#1e88e5', svg: `<line x1="16" y1="8" x2="16" y2="56" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><rect x="16" y="8" width="30" height="22" rx="2" fill="COLOR"/>` },
+          { id: 'trophy', label: 'Trophée', color: '#FFD600', svg: `<path d="M22 8 L42 8 L42 28 C42 38 34 44 32 46 C30 44 22 38 22 28Z" fill="none" stroke="COLOR" stroke-width="3"/><path d="M22 14 C18 14 14 18 14 22 C14 26 18 28 22 28" fill="none" stroke="COLOR" stroke-width="3"/><path d="M42 14 C46 14 50 18 50 22 C50 26 46 28 42 28" fill="none" stroke="COLOR" stroke-width="3"/><line x1="32" y1="46" x2="32" y2="52" stroke="COLOR" stroke-width="3"/><line x1="22" y1="52" x2="42" y2="52" stroke="COLOR" stroke-width="3"/>` },
+          { id: 'podium', label: 'Podium', color: '#FFD600', svg: `<rect x="6" y="36" width="16" height="18" rx="1" fill="none" stroke="COLOR" stroke-width="2.5"/><rect x="24" y="24" width="16" height="30" rx="1" fill="none" stroke="COLOR" stroke-width="2.5"/><rect x="42" y="42" width="16" height="12" rx="1" fill="none" stroke="COLOR" stroke-width="2.5"/><text x="14" y="54" text-anchor="middle" font-size="11" font-weight="bold" fill="COLOR" font-family="Arial">2</text><text x="32" y="54" text-anchor="middle" font-size="11" font-weight="bold" fill="COLOR" font-family="Arial">1</text><text x="50" y="54" text-anchor="middle" font-size="11" font-weight="bold" fill="COLOR" font-family="Arial">3</text>` },
+          { id: 'helmet', label: 'Casque', color: '#ffffff', svg: `<path d="M12 34 C12 20 20 8 32 8 C44 8 52 20 52 34 C52 42 48 48 42 50 L22 50 C16 48 12 42 12 34Z" fill="none" stroke="COLOR" stroke-width="3"/><path d="M16 38 C18 40 20 46 22 50" fill="none" stroke="COLOR" stroke-width="2.5"/><path d="M48 38 C46 40 44 46 42 50" fill="none" stroke="COLOR" stroke-width="2.5"/><path d="M18 36 C20 30 24 26 32 26 C40 26 44 30 46 36" fill="none" stroke="COLOR" stroke-width="2.5"/>` },
+          { id: 'car', label: 'Voiture', color: '#e0e0e0', svg: `<path d="M8 36 L14 22 L20 16 L44 16 L50 22 L56 36 L56 44 L8 44Z" fill="none" stroke="COLOR" stroke-width="3"/><path d="M18 22 L22 16" fill="none" stroke="COLOR" stroke-width="2"/><path d="M46 22 L42 16" fill="none" stroke="COLOR" stroke-width="2"/><circle cx="18" cy="44" r="6" fill="none" stroke="COLOR" stroke-width="3"/><circle cx="46" cy="44" r="6" fill="none" stroke="COLOR" stroke-width="3"/><line x1="8" y1="36" x2="56" y2="36" stroke="COLOR" stroke-width="2"/>` },
+        ]
+      },
+      {
+        cat: 'Circuit & Secteurs', items: [
+          { id: 'sector1', label: 'Secteur 1', color: '#ffffff', svg: `<circle cx="32" cy="32" r="24" fill="none" stroke="COLOR" stroke-width="3" opacity="0.3"/><path d="M32 32 L32 8 A24 24 0 0 1 53 20Z" fill="COLOR" opacity="0.8"/><text x="32" y="37" text-anchor="middle" font-size="13" font-weight="bold" fill="COLOR" font-family="Arial">S1</text>` },
+          { id: 'sector2', label: 'Secteur 2', color: '#ffffff', svg: `<circle cx="32" cy="32" r="24" fill="none" stroke="COLOR" stroke-width="3" opacity="0.3"/><path d="M32 32 L53 20 A24 24 0 0 1 32 56Z" fill="COLOR" opacity="0.8"/><text x="32" y="37" text-anchor="middle" font-size="13" font-weight="bold" fill="COLOR" font-family="Arial">S2</text>` },
+          { id: 'sector3', label: 'Secteur 3', color: '#ffffff', svg: `<circle cx="32" cy="32" r="24" fill="none" stroke="COLOR" stroke-width="3" opacity="0.3"/><path d="M32 32 L32 56 A24 24 0 1 1 53 20Z" fill="COLOR" opacity="0.8"/><text x="32" y="37" text-anchor="middle" font-size="13" font-weight="bold" fill="COLOR" font-family="Arial">S3</text>` },
+          { id: 'lap', label: 'Tour', color: '#ffffff', svg: `<path d="M32 10 C48 10 54 20 54 32 C54 44 48 54 32 54 C16 54 10 44 10 32 C10 20 16 10 32 10Z" fill="none" stroke="COLOR" stroke-width="3"/><path d="M22 32 L30 40 L44 24" stroke="COLOR" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>` },
+          { id: 'drs', label: 'DRS', color: '#00e676', svg: `<rect x="10" y="22" width="44" height="20" rx="3" fill="none" stroke="COLOR" stroke-width="3"/><line x1="10" y1="32" x2="54" y2="32" stroke="COLOR" stroke-width="2"/><path d="M36 15 L44 22 L36 22" fill="COLOR"/><path d="M36 42 L44 42 L44 49 L36 42Z" fill="COLOR"/>` },
+          { id: 'speed', label: 'Vitesse', color: '#ff5252', svg: `<path d="M14 44 A22 22 0 0 1 50 44" fill="none" stroke="COLOR" stroke-width="3"/><line x1="32" y1="44" x2="44" y2="24" stroke="COLOR" stroke-width="3" stroke-linecap="round"/><circle cx="32" cy="44" r="3" fill="COLOR"/><line x1="18" y1="44" x2="14" y2="44" stroke="COLOR" stroke-width="2.5"/><line x1="46" y1="44" x2="50" y2="44" stroke="COLOR" stroke-width="2.5"/><line x1="32" y1="22" x2="32" y2="18" stroke="COLOR" stroke-width="2.5"/>` },
+          { id: 'finish', label: 'Arrivée', color: '#ffffff', svg: `<line x1="16" y1="8" x2="16" y2="56" stroke="COLOR" stroke-width="3"/><line x1="48" y1="8" x2="48" y2="56" stroke="COLOR" stroke-width="3"/><path d="M16 32 Q32 20 48 32" fill="none" stroke="COLOR" stroke-width="3"/><path d="M16 32 Q32 44 48 32" fill="none" stroke="COLOR" stroke-width="2" stroke-dasharray="4 3"/>` },
+        ]
+      },
+      {
+        cat: 'Classement & Stats', items: [
+          { id: 'rank1', label: '1ère place', color: '#FFD600', svg: `<circle cx="32" cy="32" r="26" fill="none" stroke="COLOR" stroke-width="3"/><text x="32" y="42" text-anchor="middle" font-size="28" font-weight="bold" fill="COLOR" font-family="Arial">1</text>` },
+          { id: 'rank2', label: '2ème place', color: '#b0bec5', svg: `<circle cx="32" cy="32" r="26" fill="none" stroke="COLOR" stroke-width="3"/><text x="32" y="42" text-anchor="middle" font-size="28" font-weight="bold" fill="COLOR" font-family="Arial">2</text>` },
+          { id: 'rank3', label: '3ème place', color: '#ff8a65', svg: `<circle cx="32" cy="32" r="26" fill="none" stroke="COLOR" stroke-width="3"/><text x="32" y="42" text-anchor="middle" font-size="28" font-weight="bold" fill="COLOR" font-family="Arial">3</text>` },
+          { id: 'pts', label: 'Points', color: '#ffffff', svg: `<polygon points="32,8 38,24 56,24 42,36 48,52 32,42 16,52 22,36 8,24 26,24" fill="none" stroke="COLOR" stroke-width="2.5"/>` },
+          { id: 'fastest', label: 'Meilleur Tour', color: '#ce93d8', svg: `<path d="M32 8 L36 24 H52 L40 34 L44 50 L32 42 L20 50 L24 34 L12 24 H28Z" fill="none" stroke="COLOR" stroke-width="2.5"/><circle cx="32" cy="32" r="6" fill="COLOR"/>` },
+          { id: 'gap', label: 'Écart', color: '#ffffff', svg: `<line x1="10" y1="32" x2="54" y2="32" stroke="COLOR" stroke-width="3"/><line x1="10" y1="24" x2="10" y2="40" stroke="COLOR" stroke-width="3"/><line x1="54" y1="24" x2="54" y2="40" stroke="COLOR" stroke-width="3"/><path d="M26 20 L32 32 L26 44" fill="none" stroke="COLOR" stroke-width="2.5" stroke-linecap="round"/>` },
+        ]
+      },
+      {
+        cat: 'GT7 Spécial', items: [
+          { id: 'gt7_logo', label: 'GT7 Badge', color: '#ffffff', svg: `<rect x="8" y="16" width="48" height="32" rx="4" fill="none" stroke="COLOR" stroke-width="2.5"/><text x="32" y="38" text-anchor="middle" font-size="16" font-weight="bold" fill="COLOR" font-family="Arial">GT7</text>` },
+          { id: 'gr1', label: 'Gr.1', color: '#ff9100', svg: `<rect x="8" y="16" width="48" height="32" rx="4" fill="none" stroke="COLOR" stroke-width="2.5"/><text x="32" y="38" text-anchor="middle" font-size="16" font-weight="bold" fill="COLOR" font-family="Arial">Gr.1</text>` },
+          { id: 'gr2', label: 'Gr.2', color: '#e040fb', svg: `<rect x="8" y="16" width="48" height="32" rx="4" fill="none" stroke="COLOR" stroke-width="2.5"/><text x="32" y="38" text-anchor="middle" font-size="16" font-weight="bold" fill="COLOR" font-family="Arial">Gr.2</text>` },
+          { id: 'gr3', label: 'Gr.3', color: '#ff5252', svg: `<rect x="8" y="16" width="48" height="32" rx="4" fill="none" stroke="COLOR" stroke-width="2.5"/><text x="32" y="38" text-anchor="middle" font-size="16" font-weight="bold" fill="COLOR" font-family="Arial">Gr.3</text>` },
+          { id: 'gr4', label: 'Gr.4', color: '#40c4ff', svg: `<rect x="8" y="16" width="48" height="32" rx="4" fill="none" stroke="COLOR" stroke-width="2.5"/><text x="32" y="38" text-anchor="middle" font-size="16" font-weight="bold" fill="COLOR" font-family="Arial">Gr.4</text>` },
+          { id: 'grN', label: 'Gr.N', color: '#aaaaaa', svg: `<rect x="8" y="16" width="48" height="32" rx="4" fill="none" stroke="COLOR" stroke-width="2.5"/><text x="32" y="38" text-anchor="middle" font-size="16" font-weight="bold" fill="COLOR" font-family="Arial">Gr.N</text>` },
+          { id: 'n300', label: 'N300', color: '#69f0ae', svg: `<rect x="8" y="16" width="48" height="32" rx="4" fill="none" stroke="COLOR" stroke-width="2.5"/><text x="32" y="38" text-anchor="middle" font-size="14" font-weight="bold" fill="COLOR" font-family="Arial">N300</text>` },
+          { id: 'sport', label: 'Sport Mode', color: '#ffffff', svg: `<path d="M12 48 L32 8 L52 48Z" fill="none" stroke="COLOR" stroke-width="3"/><line x1="32" y1="20" x2="32" y2="38" stroke="COLOR" stroke-width="2.5"/><circle cx="32" cy="43" r="2.5" fill="COLOR"/>` },
+          { id: 'online', label: 'Online Race', color: '#40c4ff', svg: `<circle cx="32" cy="32" r="24" fill="none" stroke="COLOR" stroke-width="2.5"/><path d="M14 24 Q20 16 32 16 Q44 16 50 24" fill="none" stroke="COLOR" stroke-width="2"/><path d="M14 40 Q20 48 32 48 Q44 48 50 40" fill="none" stroke="COLOR" stroke-width="2"/><line x1="8" y1="32" x2="56" y2="32" stroke="COLOR" stroke-width="2"/><line x1="32" y1="8" x2="32" y2="56" stroke="COLOR" stroke-width="2"/>` },
+        ]
+      },
+    ];
+
+    /* ===== BUILD ICONS PANEL ===== */
+    function buildIconsPanel(filter = '') {
+      const scroll = document.getElementById('icons-scroll');
+      scroll.innerHTML = '';
+      const q = filter.toLowerCase().trim();
+      for (const cat of GT7_ICONS) {
+        const items = q ? cat.items.filter(i => i.label.toLowerCase().includes(q)) : cat.items;
+        if (!items.length) continue;
+        const div = document.createElement('div'); div.className = 'icon-category';
+        div.innerHTML = `<div class="icon-cat-title">${cat.cat}</div><div class="icon-grid" id="grid-${cat.cat.replace(/\s/g, '')}"></div>`;
+        scroll.appendChild(div);
+        const grid = div.querySelector('.icon-grid');
+        for (const icon of items) {
+          const item = document.createElement('div'); item.className = 'icon-item';
+          const col = document.getElementById('icon-color')?.value || '#ffffff';
+          item.innerHTML = `<svg width="44" height="44" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">${icon.svg.replace(/COLOR/g, col)}</svg><span class="icon-item-label">${icon.label}</span>`;
+          item.addEventListener('click', () => addIconElement(icon));
+          grid.appendChild(item);
+        }
+      }
+    }
+
+    function filterIcons(v) { buildIconsPanel(v) }
+
+    function refreshIconColors() {
+      const col = document.getElementById('icon-color')?.value || '#ffffff';
+      document.querySelectorAll('.icon-item svg').forEach((svg, i) => {
+        const items = GT7_ICONS.flatMap(c => c.items);
+        if (items[i]) svg.innerHTML = items[i].svg.replace(/COLOR/g, col);
+      });
+    }
+
+    document.getElementById('icon-color')?.addEventListener('input', () => {
+      buildIconsPanel(document.getElementById('icon-search').value);
+    });
+
+    function addIconElement(icon) {
+      const col = document.getElementById('icon-color').value || '#ffffff';
+      const size = parseInt(document.getElementById('icon-size-num').value) || 120;
+      const el = {
+        id: mkId(), type: 'svgicon', name: icon.label, visible: true,
+        x: 400, y: 300, w: size, h: size, opacity: 1, rotation: 0,
+        iconId: icon.id, iconSvg: icon.svg, iconColor: col
+      };
+      elements.push(el); selId = el.id;
+      render(); renderLayers(); renderPropsBar();
+      toast(`Icône "${icon.label}" ajoutée`);
+    }
+
+    /* ===== CORE ===== */
+    function mkId() { return idCtr++ }
+    function getEl(id) { return elements.find(e => e.id === id) }
+
+    function addEl(type) {
+      let el = { id: mkId(), type, visible: true, name: '', opacity: 1, rotation: 0 };
+      if (type === 'text') el = { ...el, name: 'Texte', x: 300, y: 300, text: 'Mon Texte', font: 'Bebas Neue', fontSize: 100, color: '#ffffff', bold: false, italic: false, align: 'left', letterSpacing: 0, strokeColor: '#D90429', strokeWidth: 0, shadow: false, shadowColor: '#000', shadowBlur: 15 };
+      else if (type === 'rect') el = { ...el, name: 'Rectangle', x: 400, y: 300, w: 400, h: 200, fill: '#D90429', stroke: '#fff', strokeWidth: 0, radius: 0 };
+      else if (type === 'ellipse') el = { ...el, name: 'Ellipse', x: 500, y: 350, w: 300, h: 160, fill: '#D90429', stroke: '#fff', strokeWidth: 0 };
+      else if (type === 'line') el = { ...el, name: 'Ligne', x: 200, y: 540, x2: 800, y2: 540, stroke: '#ffffff', strokeWidth: 6 };
+      elements.push(el); selId = el.id;
+      render(); renderLayers(); renderPropsBar();
+      toast(el.name + ' ajouté');
+    }
+
+    function deleteSel() { if (!selId) return; elements = elements.filter(e => e.id !== selId); selId = null; render(); renderLayers(); renderPropsBar() }
+    function duplicateSel() {
+      if (!selId) return; const el = getEl(selId); const c = JSON.parse(JSON.stringify(el));
+      c.id = mkId(); c.name = el.name + ' (copie)'; c.x = (el.x || 0) + 20; c.y = (el.y || 0) + 20;
+      if (el.img) c.img = el.img;
+      elements.push(c); selId = c.id; render(); renderLayers(); renderPropsBar();
+    }
+
+    /* ===== RENDER ===== */
+    function render() {
+      CX.clearRect(0, 0, 1920, 1080);
+      CX.fillStyle = bgCol; CX.fillRect(0, 0, 1920, 1080);
+      if (bgImg) { CX.save(); CX.globalAlpha = bgOp; CX.drawImage(bgImg, 0, 0, 1920, 1080); CX.restore() }
+      for (const el of elements) {
+        if (!el.visible) continue;
+        CX.save(); CX.globalAlpha = el.opacity ?? 1;
+        if (el.rotation && el.type !== 'line') {
+          const cx = el.x + (el.w || 0) / 2, cy = el.y + (el.h || 0) / 2;
+          CX.translate(cx, cy); CX.rotate(el.rotation * Math.PI / 180); CX.translate(-cx, -cy);
+        }
+        if (el.type === 'rect') drawRect(el);
+        else if (el.type === 'ellipse') drawEll(el);
+        else if (el.type === 'text') drawText(el);
+        else if (el.type === 'line') drawLine(el);
+        else if (el.type === 'image') drawImg(el);
+        else if (el.type === 'svgicon') drawIcon(el);
+        CX.restore();
+      }
+      drawSel();
+    }
+
+    function drawRect(el) {
+      CX.beginPath(); el.radius > 0 ? CX.roundRect(el.x, el.y, el.w, el.h, el.radius) : CX.rect(el.x, el.y, el.w, el.h);
+      CX.fillStyle = el.fill; CX.fill();
+      if (el.strokeWidth > 0) { CX.strokeStyle = el.stroke; CX.lineWidth = el.strokeWidth; CX.stroke() }
+    }
+    function drawEll(el) {
+      CX.beginPath(); CX.ellipse(el.x + el.w / 2, el.y + el.h / 2, el.w / 2, el.h / 2, 0, 0, Math.PI * 2);
+      CX.fillStyle = el.fill; CX.fill();
+      if (el.strokeWidth > 0) { CX.strokeStyle = el.stroke; CX.lineWidth = el.strokeWidth; CX.stroke() }
+    }
+    function drawText(el) {
+      CX.font = `${el.italic ? 'italic ' : ''}${el.bold ? 'bold ' : ''}${el.fontSize}px "${el.font}"`;
+      CX.textAlign = el.align || 'left'; CX.letterSpacing = (el.letterSpacing || 0) + 'px';
+      if (el.shadow) { CX.shadowColor = el.shadowColor; CX.shadowBlur = el.shadowBlur }
+      if (el.strokeWidth > 0) { CX.strokeStyle = el.strokeColor; CX.lineWidth = el.strokeWidth * 2; CX.strokeText(el.text, el.x, el.y) }
+      CX.fillStyle = el.color; CX.fillText(el.text, el.x, el.y);
+      CX.shadowBlur = 0; CX.letterSpacing = '0px';
+    }
+    function drawLine(el) {
+      CX.beginPath(); CX.moveTo(el.x, el.y); CX.lineTo(el.x2, el.y2);
+      CX.strokeStyle = el.stroke; CX.lineWidth = el.strokeWidth; CX.stroke();
+    }
+    function drawImg(el) { if (el.img) CX.drawImage(el.img, el.x, el.y, el.w, el.h) }
+
+    /* Draw SVG icon via offscreen Image */
+    const iconCache = {};
+    function drawIcon(el) {
+      const key = el.iconId + el.iconColor + (el.w || 64) + (el.h || 64);
+      if (iconCache[key] && iconCache[key].complete && iconCache[key].naturalWidth > 0) {
+        CX.drawImage(iconCache[key], el.x, el.y, el.w, el.h); return;
+      }
+      const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="${el.w || 64}" height="${el.h || 64}">${el.iconSvg.replace(/COLOR/g, el.iconColor || '#ffffff')}</svg>`;
+      const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => { iconCache[key] = img; URL.revokeObjectURL(url); render() };
+      img.src = url; iconCache[key] = img;
+    }
+
+    function drawSel() {
+      SX.clearRect(0, 0, 1920, 1080); if (!selId) return;
+      const el = getEl(selId); if (!el) return;
+      const b = bounds(el); if (!b) return;
+      SX.strokeStyle = '#D90429'; SX.lineWidth = 2; SX.setLineDash([8, 4]);
+      SX.strokeRect(b.x - 6, b.y - 6, b.w + 12, b.h + 12); SX.setLineDash([]);
+      const pts = [[b.x - 6, b.y - 6], [b.x + b.w + 6, b.y - 6], [b.x - 6, b.y + b.h + 6], [b.x + b.w + 6, b.y + b.h + 6], [b.x + b.w + 6, b.y + b.h / 2], [b.x - 6, b.y + b.h / 2], [b.x + b.w / 2, b.y - 6], [b.x + b.w / 2, b.y + b.h + 6]];
+      for (const [px, py] of pts) { SX.fillStyle = '#fff'; SX.fillRect(px - 5, py - 5, 10, 10); SX.strokeStyle = '#D90429'; SX.lineWidth = 1.5; SX.strokeRect(px - 5, py - 5, 10, 10) }
+    }
+
+    function bounds(el) {
+      if (el.type === 'text') { CX.font = `${el.italic ? 'italic ' : ''}${el.bold ? 'bold ' : ''}${el.fontSize}px "${el.font}"`; const w = CX.measureText(el.text).width; return { x: el.x, y: el.y - el.fontSize * 0.85, w, h: el.fontSize } }
+      if (el.type === 'line') return { x: Math.min(el.x, el.x2), y: Math.min(el.y, el.y2), w: Math.abs(el.x2 - el.x) || 8, h: Math.abs(el.y2 - el.y) || 8 };
+      if (el.w !== undefined) return { x: el.x, y: el.y, w: el.w, h: el.h }; return null;
+    }
+
+    /* ===== MOUSE ===== */
+    function cXY(e) { const r = CV.getBoundingClientRect(); return { x: (e.clientX - r.left) / zoomLv, y: (e.clientY - r.top) / zoomLv } }
+    function hit(el, x, y) { const b = bounds(el); if (!b) return false; return x >= b.x - 8 && x <= b.x + b.w + 8 && y >= b.y - 8 && y <= b.y + b.h + 8 }
+    function hAt(b, x, y) { const pts = [[b.x - 6, b.y - 6, 'tl'], [b.x + b.w + 6, b.y - 6, 'tr'], [b.x - 6, b.y + b.h + 6, 'bl'], [b.x + b.w + 6, b.y + b.h + 6, 'br'], [b.x + b.w + 6, b.y + b.h / 2, 'mr'], [b.x - 6, b.y + b.h / 2, 'ml'], [b.x + b.w / 2, b.y - 6, 'tc'], [b.x + b.w / 2, b.y + b.h + 6, 'bc']]; for (const [px, py, n] of pts) if (x >= px - 7 && x <= px + 7 && y >= py - 7 && y <= py + 7) return n; return null }
+
+    CV.addEventListener('mousedown', e => {
+      const { x, y } = cXY(e);
+      if (selId) { const el = getEl(selId); const b = bounds(el); if (b) { const h = hAt(b, x, y); if (h) { resizing = true; resH = h; return } } }
+      let found = null; for (let i = elements.length - 1; i >= 0; i--)if (elements[i].visible && hit(elements[i], x, y)) { found = elements[i]; break }
+      if (found) { selId = found.id; dragging = true; dOX = x - found.x; dOY = y - found.y } else selId = null;
+      render(); renderLayers(); renderPropsBar();
+    });
+    CV.addEventListener('mousemove', e => {
+      const { x, y } = cXY(e);
+      if (dragging && selId) { const el = getEl(selId); if (!el) return; if (el.type === 'line') { const dx = x - dOX - el.x, dy = y - dOY - el.y; el.x += dx; el.y += dy; el.x2 += dx; el.y2 += dy; dOX = x - el.x; dOY = y - el.y } else { el.x = x - dOX; el.y = y - dOY } render(); updPos() }
+      if (resizing && selId) { const el = getEl(selId); if (!el || el.type === 'text' || el.type === 'line') return; if (resH.includes('r')) el.w = Math.max(10, x - el.x); if (resH.includes('b')) el.h = Math.max(10, y - el.y); if (resH.includes('l')) { el.w = Math.max(10, el.x + el.w - x); el.x = x } if (resH.includes('t')) { el.h = Math.max(10, el.y + el.h - y); el.y = y } render(); updPos() }
+    });
+    CV.addEventListener('mouseup', () => { dragging = false; resizing = false });
+    CV.addEventListener('dblclick', () => { if (!selId) return; const el = getEl(selId); if (el && el.type === 'text') { const t = prompt('Modifier le texte:', el.text); if (t !== null) { el.text = t; document.getElementById('p-text').value = t; render() } } });
+
+    document.addEventListener('keydown', e => {
+      if (!selId) return; if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+      const el = getEl(selId); if (!el) return; const s = e.shiftKey ? 10 : 1;
+      if (e.key === 'Delete' || e.key === 'Backspace') { deleteSel(); return }
+      if (e.key === 'ArrowLeft') el.x -= s; if (e.key === 'ArrowRight') el.x += s; if (e.key === 'ArrowUp') el.y -= s; if (e.key === 'ArrowDown') el.y += s;
+      if (e.ctrlKey && e.key === 'd') { e.preventDefault(); duplicateSel(); return }
+      render(); updPos();
+    });
+
+    /* ===== PROPS BAR ===== */
+    function sp(k, v) { if (!selId) return; const el = getEl(selId); if (el) { el[k] = v; render() } }
+    function tog(k, btnId) { if (!selId) return; const el = getEl(selId); if (el) { el[k] = !el[k]; document.getElementById(btnId).classList.toggle('ton', el[k]); render() } }
+    function togShadow() { if (!selId) return; const el = getEl(selId); if (el) { el.shadow = !el.shadow; document.getElementById('btn-shadow').classList.toggle('ton', el.shadow); render() } }
+
+    function sh(id, v) { const e = document.getElementById(id); if (e) e.style.display = v ? '' : 'none' }
+    function vl(id, v) { const e = document.getElementById(id); if (e) e.value = v }
+
+    function renderPropsBar() {
+      const bar = document.getElementById('props-bar'), msg = document.getElementById('no-sel-msg');
+      if (!selId) { bar.style.display = 'none'; msg.style.display = ''; return }
+      const el = getEl(selId); if (!el) { bar.style.display = 'none'; msg.style.display = ''; return }
+      bar.style.display = 'flex'; msg.style.display = 'none';
+      const t = el.type;
+      sh('grp-size', t === 'rect' || t === 'ellipse' || t === 'image' || t === 'svgicon'); sh('sep-size', t === 'rect' || t === 'ellipse' || t === 'image' || t === 'svgicon');
+      sh('grp-rot', t !== 'line'); sh('sep-rot', t !== 'line');
+      sh('grp-fill', t === 'rect' || t === 'ellipse'); sh('sep-fill', t === 'rect' || t === 'ellipse');
+      sh('grp-line', t === 'line'); sh('sep-line', t === 'line');
+      sh('grp-text', t === 'text'); sh('sep-text', t === 'text' ? '' : 'none');
+      sh('grp-icon', t === 'svgicon'); sh('sep-icon', t === 'svgicon');
+      vl('p-x', Math.round(el.x)); vl('p-y', Math.round(el.y));
+      vl('p-opacity', Math.round((el.opacity ?? 1) * 100));
+      if (el.w !== undefined) { vl('p-w', Math.round(el.w)); vl('p-h', Math.round(el.h)) }
+      if (el.rotation !== undefined) vl('p-rot', Math.round(el.rotation || 0));
+      if (t === 'rect' || t === 'ellipse') { vl('p-fill', el.fill); vl('p-sc', el.stroke || '#fff'); vl('p-sw', el.strokeWidth || 0) }
+      if (t === 'line') { vl('p-lc', el.stroke); vl('p-lw', el.strokeWidth) }
+      if (t === 'text') { vl('p-text', el.text); vl('p-font', el.font); vl('p-fs', el.fontSize); vl('p-color', el.color); vl('p-align', el.align || 'left'); document.getElementById('btn-bold').classList.toggle('ton', !!el.bold); document.getElementById('btn-italic').classList.toggle('ton', !!el.italic); document.getElementById('btn-shadow').classList.toggle('ton', !!el.shadow); vl('p-tsc', el.strokeColor || '#D90429'); vl('p-tsw', el.strokeWidth || 0) }
+      if (t === 'svgicon') { vl('p-icon-color', el.iconColor || '#ffffff') }
+    }
+    function updPos() { if (!selId) return; const el = getEl(selId); if (!el) return; vl('p-x', Math.round(el.x)); vl('p-y', Math.round(el.y)); if (el.w !== undefined) { vl('p-w', Math.round(el.w)); vl('p-h', Math.round(el.h)) } }
+
+    /* ===== FONT SELECT ===== */
+    function renderFontSel() {
+      const s = document.getElementById('p-font');
+      const all = [...FONTS, ...customFonts]; const cur = s.value;
+      s.innerHTML = all.map(f => `<option value="${f}">${f}</option>`).join('');
+      if (cur) s.value = cur;
+    }
+
+    /* ===== LAYERS ===== */
+    function renderLayers() {
+      const list = document.getElementById('layers-list'); list.innerHTML = '';
+      const icons = { text: 'T', rect: '▭', ellipse: '○', line: '╱', image: '🖼', svgicon: '⬡' };
+      for (let i = elements.length - 1; i >= 0; i--) {
+        const el = elements[i]; const d = document.createElement('div'); d.className = 'layer-item' + (el.id === selId ? ' sel' : '');
+        d.innerHTML = `<span class="li-icon">${icons[el.type] || '◼'}</span><span class="li-name">${el.name}</span><button class="lbtn" onclick="tVis(${el.id},event)">${el.visible ? '👁' : '🙈'}</button><button class="lbtn" onclick="mvL(${el.id},'up',event)">↑</button><button class="lbtn" onclick="mvL(${el.id},'dn',event)">↓</button>`;
+        d.addEventListener('click', () => { selId = el.id; render(); renderLayers(); renderPropsBar() });
+        list.appendChild(d);
+      }
+    }
+    function tVis(id, e) { e.stopPropagation(); const el = getEl(id); if (el) { el.visible = !el.visible; render(); renderLayers() } }
+    function mvL(id, dir, e) { e.stopPropagation(); const i = elements.findIndex(el => el.id === id); if (dir === 'up' && i < elements.length - 1) [elements[i], elements[i + 1]] = [elements[i + 1], elements[i]]; else if (dir === 'dn' && i > 0) [elements[i], elements[i - 1]] = [elements[i - 1], elements[i]]; render(); renderLayers() }
+    function toggleLayers() { const p = document.getElementById('layers-panel'); const o = p.classList.toggle('open'); document.getElementById('btn-layers').classList.toggle('active', o) }
+
+    /* ===== ICONS PANEL ===== */
+    function toggleIcons() {
+      const p = document.getElementById('icons-panel'); const o = p.classList.toggle('open');
+      document.getElementById('btn-icons').classList.toggle('active', o);
+      const sb = document.getElementById('icon-size-bar');
+      const iconsActive = document.getElementById('tab-icons').classList.contains('active');
+      sb.style.display = (o && iconsActive) ? 'flex' : 'none';
+    }
+
+    /* ===== ZOOM ===== */
+    function applyZoom() { container.style.transform = `scale(${zoomLv})`; document.getElementById('zoom-val').textContent = Math.round(zoomLv * 100) + '%' }
+    function doZoom(d) { zoomLv = Math.max(0.1, Math.min(3, zoomLv + d)); applyZoom() }
+    function fitZoom() { const w = document.getElementById('canvas-area').clientWidth - 40, h = document.getElementById('canvas-area').clientHeight - 40; zoomLv = Math.min(w / 1920, h / 1080); applyZoom() }
+
+    /* ===== BG / FONT / IMG ===== */
+    function openPopup(id) { document.getElementById(id).style.display = 'block' }
+    function closePopup(id) { document.getElementById(id).style.display = 'none' }
+    document.addEventListener('mousedown', e => {
+      ['font-popup', 'bg-popup'].forEach(id => { const p = document.getElementById(id); if (p.style.display === 'block' && !p.contains(e.target)) p.style.display = 'none' });
+    });
+
+    function handleBgFile(e) { const f = e.target.files[0]; if (!f) return; const img = new Image(); img.onload = () => { bgImg = img; render() }; img.src = URL.createObjectURL(f) }
+
+    function handleFontDrop(e) { e.preventDefault(); document.getElementById('font-drop-zone').classList.remove('drag-over'); handleFontFiles(e.dataTransfer.files) }
+    function handleFontFiles(files) {
+      for (const file of files) {
+        const name = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+        new FontFace(name, `url(${URL.createObjectURL(file)})`).load().then(f => {
+          document.fonts.add(f); if (!customFonts.includes(name)) customFonts.push(name);
+          renderFontSel();
+          const lst = document.getElementById('font-list-loaded'); lst.innerHTML = customFonts.map(n => `<div class="fli">✓ ${n}</div>`).join('');
+          toast(`Police "${name}" chargée !`);
+        }).catch(() => toast('Erreur chargement police'));
+      }
+    }
+
+    function handleImgFile(e) {
+      const f = e.target.files[0]; if (!f) return;
+      const img = new Image(); img.onload = () => { const r = img.height / img.width; const el = { id: mkId(), type: 'image', name: f.name.replace(/\.[^.]+$/, ''), visible: true, x: 200, y: 200, w: 500, h: Math.round(500 * r), opacity: 1, rotation: 0, img }; elements.push(el); selId = el.id; render(); renderLayers(); renderPropsBar(); toast('Image ajoutée') };
+      img.src = URL.createObjectURL(f); e.target.value = '';
+    }
+
+    /* ===== EXPORT ===== */
+    function exportPNG() {
+      const old = selId; selId = null; render(); SX.clearRect(0, 0, 1920, 1080);
+      const a = document.createElement('a'); a.download = 'Affiche_Course_TZR.png'; a.href = CV.toDataURL('image/png'); a.click();
+      selId = old; render(); toast('Export PNG 1920×1080 lancé !');
+    }
+
+    /* ===== PANEL TABS ===== */
+    function switchPanelTab(tab) {
+      document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel-content').forEach(p => p.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      document.getElementById('pane-' + tab).classList.add('active');
+      // show/hide icon-size-bar only for icons tab
+      const sb = document.getElementById('icon-size-bar');
+      if (sb) sb.style.display = (tab === 'icons' && document.getElementById('icons-panel').classList.contains('open')) ? 'flex' : 'none';
+    }
+
+    /* ===== GT7 CIRCUITS DATA ===== */
+    const BASE_URL = 'https://gt-engine.com/gt7/tracks/images/md/';
+    const GT7_CIRCUITS = [
+      {
+        cat: '24 Heures du Mans', items: [
+          { id: '24-heures-du-mans', label: 'Le Mans' },
+          { id: '24-heures-du-mans-no-chicane', label: 'Le Mans No Chicane' },
+        ]
+      },
+      {
+        cat: 'Alsace', items: [
+          { id: 'alsace-village', label: 'Village' },
+          { id: 'alsace-village-2', label: 'Village Reverse' },
+          { id: 'alsace-test', label: 'Test Course' },
+          { id: 'alsace-test-2', label: 'Test Course Reverse' },
+        ]
+      },
+      {
+        cat: 'Autopolis', items: [
+          { id: 'autopolis', label: 'Autopolis' },
+          { id: 'autopolis-shortcut', label: 'Shortcut' },
+        ]
+      },
+      {
+        cat: 'Barcelona-Catalunya', items: [
+          { id: 'barcelona-catalunya-gp', label: 'GP' },
+          { id: 'barcelona-catalunya-gp-no-chicane', label: 'GP No Chicane' },
+          { id: 'barcelona-catalunya-national', label: 'National' },
+          { id: 'barcelona-catalunya-rallycross', label: 'Rallycross' },
+        ]
+      },
+      {
+        cat: 'Blue Moon Bay', items: [
+          { id: 'blue-moon-speedway', label: 'Speedway' },
+          { id: 'blue-moon-speedway-2', label: 'Speedway Rev.' },
+          { id: 'blue-moon-infield-a', label: 'Infield A' },
+          { id: 'blue-moon-infield-a2', label: 'Infield A Rev.' },
+          { id: 'blue-moon-infield-b', label: 'Infield B' },
+          { id: 'blue-moon-infield-b2', label: 'Infield B Rev.' },
+        ]
+      },
+      {
+        cat: 'Brands Hatch', items: [
+          { id: 'brands-hatch-gp', label: 'GP' },
+          { id: 'brands-hatch-indy', label: 'Indy' },
+        ]
+      },
+      {
+        cat: 'Broad Bean', items: [
+          { id: 'broad-bean', label: 'Broad Bean' },
+          { id: 'broad-bean-2', label: 'Reverse' },
+        ]
+      },
+      {
+        cat: 'Colorado Springs', items: [
+          { id: 'colorado-springs-lake', label: 'Lake' },
+          { id: 'colorado-springs-lake-2', label: 'Lake Reverse' },
+        ]
+      },
+      {
+        cat: 'Daytona', items: [
+          { id: 'daytona-tri-oval', label: 'Tri-Oval' },
+          { id: 'daytona-road', label: 'Road Course' },
+        ]
+      },
+      {
+        cat: 'Deep Forest', items: [
+          { id: 'deep-forest', label: 'Deep Forest' },
+          { id: 'deep-forest-2', label: 'Reverse' },
+        ]
+      },
+      {
+        cat: 'Dragon Trail', items: [
+          { id: 'dragon-trail-seaside', label: 'Seaside' },
+          { id: 'dragon-trail-seaside-2', label: 'Seaside Rev.' },
+          { id: 'dragon-trail-gardens', label: 'Gardens' },
+          { id: 'dragon-trail-gardens-2', label: 'Gardens Rev.' },
+        ]
+      },
+      {
+        cat: 'Eiger Nordwand', items: [
+          { id: 'eiger-nordwand', label: 'Eiger Nordwand' },
+          { id: 'eiger-nordwand-2', label: 'Reverse' },
+        ]
+      },
+      {
+        cat: 'Fishermans Ranch', items: [
+          { id: 'fishermans-ranch', label: 'Fishermans Ranch' },
+          { id: 'fishermans-ranch-2', label: 'Reverse' },
+        ]
+      },
+      {
+        cat: 'Fuji', items: [
+          { id: 'fuji', label: 'Fuji' },
+          { id: 'fuji-short', label: 'Short' },
+        ]
+      },
+      {
+        cat: 'Gilles-Villeneuve', items: [
+          { id: 'gilles-villeneuve', label: 'Gilles-Villeneuve' },
+        ]
+      },
+      {
+        cat: 'Goodwood', items: [
+          { id: 'goodwood', label: 'Goodwood' },
+        ]
+      },
+      {
+        cat: 'Grand Valley', items: [
+          { id: 'grand-valley-highway-1', label: 'Highway 1' },
+          { id: 'grand-valley-highway-1-2', label: 'Highway 1 Rev.' },
+          { id: 'grand-valley-south', label: 'South' },
+          { id: 'grand-valley-south-2', label: 'South Reverse' },
+        ]
+      },
+      {
+        cat: 'High Speed Ring', items: [
+          { id: 'high-speed-ring', label: 'High Speed Ring' },
+          { id: 'high-speed-ring-2', label: 'Reverse' },
+        ]
+      },
+      {
+        cat: 'Interlagos', items: [
+          { id: 'interlagos', label: 'Interlagos' },
+        ]
+      },
+      {
+        cat: 'Kyoto Driving Park', items: [
+          { id: 'kyoto-miyabi', label: 'Miyabi' },
+          { id: 'kyoto-yamagiwa', label: 'Yamagiwa' },
+          { id: 'kyoto-yamagiwa-2', label: 'Yamagiwa Rev.' },
+          { id: 'kyoto-yamagiwa-miyabi', label: 'Yamagiwa+Miyabi' },
+          { id: 'kyoto-yamagiwa-miyabi-2', label: 'Y+M Reverse' },
+        ]
+      },
+      {
+        cat: 'Lago Maggiore', items: [
+          { id: 'lago-maggiore-full', label: 'Full Course' },
+          { id: 'lago-maggiore-full-2', label: 'Full Rev.' },
+          { id: 'lago-maggiore-centre', label: 'Centre' },
+          { id: 'lago-maggiore-centre-2', label: 'Centre Rev.' },
+          { id: 'lago-maggiore-east', label: 'East' },
+          { id: 'lago-maggiore-east-2', label: 'East Rev.' },
+          { id: 'lago-maggiore-east-end', label: 'East End' },
+          { id: 'lago-maggiore-east-end-2', label: 'East End Rev.' },
+          { id: 'lago-maggiore-west', label: 'West' },
+          { id: 'lago-maggiore-west-2', label: 'West Rev.' },
+          { id: 'lago-maggiore-west-end', label: 'West End' },
+          { id: 'lago-maggiore-west-end-2', label: 'West End Rev.' },
+        ]
+      },
+      {
+        cat: 'Laguna Seca', items: [
+          { id: 'laguna-seca', label: 'Laguna Seca' },
+        ]
+      },
+      {
+        cat: 'Lake Louise', items: [
+          { id: 'lake-louise-long', label: 'Long Track' },
+          { id: 'lake-louise-long-2', label: 'Long Rev.' },
+          { id: 'lake-louise-short', label: 'Short Track' },
+          { id: 'lake-louise-short-2', label: 'Short Rev.' },
+          { id: 'lake-louise-tri-oval', label: 'Tri-Oval' },
+          { id: 'lake-louise-tri-oval-2', label: 'Tri-Oval Rev.' },
+        ]
+      },
+      {
+        cat: 'Monza', items: [
+          { id: 'monza', label: 'Monza' },
+          { id: 'monza-no-chicane', label: 'No Chicane' },
+        ]
+      },
+      {
+        cat: 'Mount Panorama', items: [
+          { id: 'mount-panorama', label: 'Bathurst' },
+        ]
+      },
+      {
+        cat: 'Northern Isle', items: [
+          { id: 'northern-isle', label: 'Northern Isle' },
+          { id: 'northern-isle-infield', label: 'Infield' },
+        ]
+      },
+      {
+        cat: 'Nürburgring', items: [
+          { id: 'nurburgring-24h', label: '24h' },
+          { id: 'nurburgring-endurance', label: 'Endurance' },
+          { id: 'nurburgring-endurance-2', label: 'Endurance II' },
+          { id: 'nurburgring-nordschleife', label: 'Nordschleife' },
+          { id: 'nurburgring-nordschleife-tourist', label: 'Tourist' },
+          { id: 'nurburgring-gp', label: 'GP' },
+          { id: 'nurburgring-sprint', label: 'Sprint' },
+        ]
+      },
+      {
+        cat: 'Red Bull Ring', items: [
+          { id: 'red-bull-ring', label: 'Red Bull Ring' },
+          { id: 'red-bull-ring-short', label: 'Short' },
+        ]
+      },
+      {
+        cat: 'Road Atlanta', items: [
+          { id: 'road-atlanta', label: 'Road Atlanta' },
+        ]
+      },
+      {
+        cat: 'Sainte-Croix', items: [
+          { id: 'sainte-croix-a', label: 'A' },
+          { id: 'sainte-croix-a2', label: 'A Reverse' },
+          { id: 'sainte-croix-b', label: 'B' },
+          { id: 'sainte-croix-b2', label: 'B Reverse' },
+          { id: 'sainte-croix-c', label: 'C' },
+          { id: 'sainte-croix-c2', label: 'C Reverse' },
+        ]
+      },
+      {
+        cat: 'Sardegna', items: [
+          { id: 'sardegna-road-a', label: 'Road A' },
+          { id: 'sardegna-road-a2', label: 'Road A Rev.' },
+          { id: 'sardegna-road-b', label: 'Road B' },
+          { id: 'sardegna-road-b2', label: 'Road B Rev.' },
+          { id: 'sardegna-road-c', label: 'Road C' },
+          { id: 'sardegna-road-c2', label: 'Road C Rev.' },
+          { id: 'sardegna-windmills', label: 'Windmills' },
+          { id: 'sardegna-windmills-2', label: 'Windmills Rev.' },
+        ]
+      },
+      {
+        cat: 'Spa-Francorchamps', items: [
+          { id: 'spa-francorchamps', label: 'Spa' },
+          { id: 'spa-24h', label: 'Spa 24h' },
+        ]
+      },
+      {
+        cat: 'Special Stage', items: [
+          { id: 'special-stage-route-x', label: 'Route X' },
+        ]
+      },
+      {
+        cat: 'Suzuka', items: [
+          { id: 'suzuka', label: 'Suzuka' },
+          { id: 'suzuka-east', label: 'East' },
+        ]
+      },
+      {
+        cat: 'Tokyo Expressway', items: [
+          { id: 'tokyo-express-central-cw', label: 'Central CW' },
+          { id: 'tokyo-express-central-ccw', label: 'Central CCW' },
+          { id: 'tokyo-express-east-cw', label: 'East CW' },
+          { id: 'tokyo-express-east-ccw', label: 'East CCW' },
+          { id: 'tokyo-express-south-cw', label: 'South CW' },
+          { id: 'tokyo-express-south-ccw', label: 'South CCW' },
+        ]
+      },
+      {
+        cat: 'Trial Mountain', items: [
+          { id: 'trial-mountain', label: 'Trial Mountain' },
+          { id: 'trial-mountain-2', label: 'Reverse' },
+        ]
+      },
+      {
+        cat: 'Tsukuba', items: [
+          { id: 'tsukuba', label: 'Tsukuba' },
+        ]
+      },
+      {
+        cat: 'Watkins Glen', items: [
+          { id: 'watkins-glen-long', label: 'Long Course' },
+          { id: 'watkins-glen-short', label: 'Short Course' },
+        ]
+      },
+      {
+        cat: 'Willow Springs', items: [
+          { id: 'willow-springs-big-willow', label: 'Big Willow' },
+          { id: 'willow-springs-horse-thief-mile', label: 'Horse Thief' },
+          { id: 'willow-springs-horse-thief-mile-2', label: 'Horse Thief Rev.' },
+          { id: 'willow-springs-streets-of-willow-springs', label: 'Streets' },
+          { id: 'willow-springs-streets-of-willow-springs-2', label: 'Streets Rev.' },
+        ]
+      },
+      {
+        cat: 'Yas Marina', items: [
+          { id: 'yas-marina', label: 'Yas Marina' },
+        ]
+      },
+    ];
+
+    /* ===== BUILD CIRCUITS PANEL ===== */
+    function buildCircuitsPanel(filter = '') {
+      const scroll = document.getElementById('circuits-scroll');
+      scroll.innerHTML = '';
+      const q = filter.toLowerCase().trim();
+      for (const cat of GT7_CIRCUITS) {
+        const items = q ? cat.items.filter(i => i.label.toLowerCase().includes(q) || cat.cat.toLowerCase().includes(q)) : cat.items;
+        if (!items.length) continue;
+        const div = document.createElement('div'); div.className = 'circuit-category';
+        div.innerHTML = `<div class="circuit-cat-title">${cat.cat}</div><div class="circuit-grid"></div>`;
+        scroll.appendChild(div);
+        const grid = div.querySelector('.circuit-grid');
+        for (const circuit of items) {
+          const item = document.createElement('div'); item.className = 'circuit-item';
+          item.title = `Ajouter : ${cat.cat} — ${circuit.label}`;
+          const imgUrl = BASE_URL + circuit.id + '.png';
+          item.innerHTML = `<img src="${imgUrl}" alt="${circuit.label}" loading="lazy" onerror="this.style.opacity='0.2'"><span class="circuit-item-label">${circuit.label}</span>`;
+          item.addEventListener('click', () => addCircuitImage(circuit, cat.cat, imgUrl));
+          grid.appendChild(item);
+        }
+      }
+    }
+
+    function filterCircuits(v) { buildCircuitsPanel(v) }
+
+    function addCircuitImage(circuit, catName, imgUrl) {
+      const img = new Image();
+      img.onload = () => {
+        const ratio = img.height / img.width;
+        const w = 400, h = Math.round(w * ratio);
+        const el = { id: mkId(), type: 'image', name: catName + ' — ' + circuit.label, visible: true, x: 760, y: 540 - h / 2, w, h, opacity: 1, rotation: 0, img };
+        elements.push(el); selId = el.id;
+        render(); renderLayers(); renderPropsBar();
+        toast('Circuit ajouté : ' + circuit.label);
+      };
+      img.onerror = () => {
+        fetch(imgUrl)
+          .then(r => r.blob())
+          .then(blob => {
+            const url = URL.createObjectURL(blob);
+            const img2 = new Image();
+            img2.onload = () => {
+              const ratio = img2.height / img2.width;
+              const w = 400, h = Math.round(w * ratio);
+              const el = { id: mkId(), type: 'image', name: catName + ' — ' + circuit.label, visible: true, x: 760, y: 540 - h / 2, w, h, opacity: 1, rotation: 0, img: img2 };
+              elements.push(el); selId = el.id;
+              render(); renderLayers(); renderPropsBar();
+              toast('Circuit ajouté : ' + circuit.label);
+            };
+            img2.src = url;
+          })
+          .catch(() => toast('Impossible de charger le circuit (CORS)'));
+      };
+      img.src = imgUrl;
+    }
+
+
+    function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = 'none', 2200) }
+
+    /* ===== INIT ===== */
+    (function init() {
+      const lnk = document.createElement('link'); lnk.rel = 'stylesheet'; lnk.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,700;1,400;1,700&display=swap'; document.head.appendChild(lnk);
+      fitZoom(); renderFontSel(); buildIconsPanel(); buildCircuitsPanel(); render();
+    })();
+  </script>
+</body>
+
+</html>
